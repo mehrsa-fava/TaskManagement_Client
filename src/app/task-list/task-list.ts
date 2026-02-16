@@ -24,7 +24,7 @@ export class TaskList implements OnInit {
   constructor(
     protected taskService: TaskService,
     private readonly authService: AuthService,
-    private readonly router: Router
+    private readonly router: Router,
   ) {}
 
   readonly filterTabs = FILTER_TABS;
@@ -32,8 +32,8 @@ export class TaskList implements OnInit {
   readonly filteredTasks = computed(() => {
     const tasks = this.taskService.tasks();
     const f = this.filterSignal();
-    if (f === 'active') return tasks.filter((t) => t.status !== 'completed');
-    if (f === 'completed') return tasks.filter((t) => t.status === 'completed');
+    if (f === 'active') return tasks.filter((t) => t.status !== 'Completed');
+    if (f === 'completed') return tasks.filter((t) => t.status === 'Completed');
     return tasks;
   });
 
@@ -51,7 +51,7 @@ export class TaskList implements OnInit {
   }
 
   isCompleted(task: Task): boolean {
-    return task.status === 'completed';
+    return task.status === 'Done';
   }
 
   formatDueDate = formatShortDate;

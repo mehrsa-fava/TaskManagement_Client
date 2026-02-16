@@ -1,15 +1,22 @@
 /** API DTOs and enum values matching the backend (C#). */
 
 export const TaskStatusApi = {
-  Todo: 0,
+  Open: 0,
   InProgress: 1,
   Completed: 2,
+  InReview: 3,
+  Accept: 4,
+  Reject: 5,
+  Done: 6,
+  Pending: 7,
+  Block: 8,
 } as const;
 
 export const TaskPriorityApi = {
   Low: 0,
   Medium: 1,
   High: 2,
+  Urgent: 3,
 } as const;
 
 /** Request/response use PascalCase to match C# DTOs if API does not use camelCase. */

@@ -2,18 +2,9 @@ import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of, map, forkJoin } from 'rxjs';
 import { environment } from '../../environments/environment';
-import {
-  Task,
-  TaskStatus,
-  AddTaskInput,
-  UpdateTaskInput,
-} from '../model/task';
+import { Task, TaskStatus, AddTaskInput, UpdateTaskInput } from '../model/task';
 import type { TaskApiResponse, CreateTaskDto, UpdateTaskDto } from '../model/task-api';
-import {
-  apiToTask,
-  toCreateDto,
-  toUpdateDto,
-} from './task-api.mappers';
+import { apiToTask, toCreateDto, toUpdateDto } from './task-api.mappers';
 import { getApiErrorMessage } from '../utils/api-error.util';
 
 const TASK_BASE = `${environment.api}/Task`;
@@ -38,10 +29,10 @@ export class TaskService {
   readonly error = this.errorSignal.asReadonly();
 
   readonly completedCount = computed(
-    () => this.tasksSignal().filter((t) => t.status === 'completed').length
+    () => this.tasksSignal().filter((t) => t.status === 'Done').length,
   );
   readonly activeCount = computed(
-    () => this.tasksSignal().filter((t) => t.status !== 'completed').length
+    () => this.tasksSignal().filter((t) => t.status !== 'Done').length,
   );
 
   loadTasks(): Observable<Task[]> {
@@ -58,7 +49,7 @@ export class TaskService {
       tap((tasks) => {
         this.tasksSignal.set(tasks);
         this.errorSignal.set(null);
-      })
+      }),
     );
   }
 
@@ -73,23 +64,20 @@ export class TaskService {
       .get<TaskApiResponse>(`${TASK_BASE}/GetTaskById`, { params: { id: numId } })
       .pipe(
         map(apiToTask),
-        catchError(() => of(null))
+        catchError(() => of(null)),
       );
   }
 
   addTask(input: AddTaskInput | string): Observable<Task | null> {
-    const params: AddTaskInput =
-      typeof input === 'string' ? { title: input } : input;
+    const params: AddTaskInput = typeof input === 'string' ? { title: input } : input;
     const title = (params.title ?? '').trim();
     if (!title) throw new Error('Task title is required');
 
     const dto: CreateTaskDto = toCreateDto(params, title);
     return this.http.post<TaskApiResponse>(`${TASK_BASE}/CreateNewTask`, dto).pipe(
-      tap((created) =>
-        this.tasksSignal.update((list) => [...list, apiToTask(created)])
-      ),
+      tap((created) => this.tasksSignal.update((list) => [...list, apiToTask(created)])),
       map(apiToTask),
-      catchError(() => of(null))
+      catchError(() => of(null)),
     );
   }
 
@@ -119,12 +107,12 @@ export class TaskService {
                   ...(input.status !== undefined && { status: input.status }),
                   updatedAt: now,
                 }
-              : t
-          )
-        )
+              : t,
+          ),
+        ),
       ),
       map(() => true),
-      catchError(() => of(false))
+      catchError(() => of(false)),
     );
   }
 
@@ -135,8 +123,7 @@ export class TaskService {
   toggleCompleted(id: string): Observable<boolean> {
     const task = this.getTask(id);
     if (!task) return of(false);
-    const nextStatus: TaskStatus =
-      task.status === 'completed' ? 'in_progress' : 'completed';
+    const nextStatus: TaskStatus = task.status === 'Done' ? 'Open' : 'Done';
     return this.setStatus(id, nextStatus);
   }
 
@@ -148,20 +135,18 @@ export class TaskService {
         params: { id: numId },
       })
       .pipe(
-        tap(() =>
-          this.tasksSignal.update((list) => list.filter((t) => t.id !== id))
-        ),
+        tap(() => this.tasksSignal.update((list) => list.filter((t) => t.id !== id))),
         map(() => true),
-        catchError(() => of(false))
+        catchError(() => of(false)),
       );
   }
 
   clearCompleted(): Observable<boolean> {
-    const completed = this.tasksSignal().filter((t) => t.status === 'completed');
+    const completed = this.tasksSignal().filter((t) => t.status === 'Completed');
     if (completed.length === 0) return of(true);
     return forkJoin(completed.map((t) => this.deleteTask(t.id))).pipe(
       map((results) => results.every(Boolean)),
-      catchError(() => of(false))
+      catchError(() => of(false)),
     );
   }
 }

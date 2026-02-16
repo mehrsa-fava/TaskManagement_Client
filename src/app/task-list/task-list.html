@@ -4,12 +4,8 @@
     <header class="mb-10">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 class="text-3xl font-bold tracking-tight text-slate-800">
-            Todo
-          </h1>
-          <p class="mt-1 text-slate-500">
-            Manage your tasks. Add, complete, or remove them.
-          </p>
+          <h1 class="text-3xl font-bold tracking-tight text-slate-800">Todo</h1>
+          <p class="mt-1 text-slate-500">Manage your tasks. Add, complete, or remove them.</p>
         </div>
         <button
           type="button"
@@ -28,7 +24,12 @@
         class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
       >
         <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          />
         </svg>
         Add task
       </a>
@@ -76,7 +77,12 @@
           >
             @if (isCompleted(task)) {
               <svg class="size-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             }
           </button>
@@ -96,35 +102,49 @@
             <div class="mt-1 flex flex-wrap gap-2">
               <span
                 class="inline-flex rounded-md px-2 py-0.5 text-xs font-medium"
-                [class.bg-slate-100]="task.status === 'todo'"
-                [class.text-slate-700]="task.status === 'todo'"
-                [class.bg-amber-100]="task.status === 'in_progress'"
-                [class.text-amber-800]="task.status === 'in_progress'"
-                [class.bg-emerald-100]="task.status === 'completed'"
-                [class.text-emerald-800]="task.status === 'completed'"
+                [class.bg-slate-100]="task.status === 'Open'"
+                [class.text-slate-700]="task.status === 'Open'"
+                [class.bg-amber-100]="task.status === 'InProgress'"
+                [class.text-amber-800]="task.status === 'InProgress'"
+                [class.bg-emerald-100]="task.status === 'Completed'"
+                [class.text-emerald-800]="task.status === 'Completed'"
+                [class.bg-indigo-100]="task.status === 'InReview'"
+                [class.text-indigo-800]="task.status === 'InReview'"
+                [class.bg-purple-100]="task.status === 'Accept'"
+                [class.text-purple-800]="task.status === 'Accept'"
+                [class.bg-red-100]="task.status === 'Reject'"
+                [class.text-red-800]="task.status === 'Reject'"
+                [class.bg-green-100]="task.status === 'Done'"
+                [class.text-green-800]="task.status === 'Done'"
+                [class.bg-blue-100]="task.status === 'Pending'"
+                [class.text-blue-800]="task.status === 'Pending'"
+                [class.bg-gray-100]="task.status === 'Block'"
+                [class.text-gray-800]="task.status === 'Block'"
               >
-                {{ task.status === 'todo' ? 'To do' : (task.status === 'in_progress' ? 'In progress' : 'Completed') }}
+                {{ task.status }}
               </span>
-              @if (task.priority && task.priority !== 'medium') {
+              @if (task.priority && task.priority !== 'Medium') {
                 <span
                   class="inline-flex rounded-md px-2 py-0.5 text-xs font-medium"
-                  [class.bg-red-100]="task.priority === 'high'"
-                  [class.text-red-800]="task.priority === 'high'"
-                  [class.bg-slate-100]="task.priority === 'low'"
-                  [class.text-slate-600]="task.priority === 'low'"
+                  [class.bg-slate-100]="task.priority === 'Low'"
+                  [class.text-slate-600]="task.priority === 'Low'"
+                  [class.bg-yellow-100]="task.priority === 'High'"
+                  [class.text-yellow-800]="task.priority === 'High'"
+                  [class.bg-red-100]="task.priority === 'Urgent'"
+                  [class.text-red-800]="task.priority === 'Urgent'"
                 >
-                  {{ task.priority === 'high' ? 'High' : 'Low' }} priority
+                  {{ task.priority }} priority
                 </span>
               }
               @if (task.category) {
-                <span class="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                <span
+                  class="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
+                >
                   {{ task.category }}
                 </span>
               }
               @if (task.dueDate) {
-                <span class="text-xs text-slate-500">
-                  Due {{ formatDueDate(task.dueDate) }}
-                </span>
+                <span class="text-xs text-slate-500"> Due {{ formatDueDate(task.dueDate) }} </span>
               }
             </div>
           </div>
@@ -134,7 +154,12 @@
             aria-label="Edit task"
           >
             <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
             </svg>
           </a>
           <button
@@ -144,12 +169,19 @@
             aria-label="Delete task"
           >
             <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
             </svg>
           </button>
         </li>
       } @empty {
-        <li class="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-slate-500">
+        <li
+          class="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-slate-500"
+        >
           No tasks yet. Add one above.
         </li>
       }
@@ -157,10 +189,11 @@
 
     <!-- Footer: counts + clear completed -->
     @if (taskService.tasks().length > 0) {
-      <div class="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-4">
+      <div
+        class="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-4"
+      >
         <p class="text-sm text-slate-500">
-          {{ taskService.activeCount() }} active,
-          {{ taskService.completedCount() }} completed
+          {{ taskService.activeCount() }} active, {{ taskService.completedCount() }} completed
         </p>
         @if (taskService.completedCount() > 0) {
           <button

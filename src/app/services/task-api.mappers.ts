@@ -1,58 +1,83 @@
 import type { Task, TaskStatus, TaskPriority } from '../model/task';
 import type { AddTaskInput, UpdateTaskInput } from '../model/task';
 import type { TaskApiResponse, CreateTaskDto, UpdateTaskDto } from '../model/task-api';
-import {
-  TaskStatusApi,
-  TaskPriorityApi,
-} from '../model/task-api';
+import { TaskStatusApi, TaskPriorityApi } from '../model/task-api';
 
 export function statusFromApi(n: number): TaskStatus {
   switch (n) {
-    case TaskStatusApi.Todo:
-      return 'todo';
+    case TaskStatusApi.Open:
+      return 'Open';
     case TaskStatusApi.InProgress:
-      return 'in_progress';
+      return 'InProgress';
     case TaskStatusApi.Completed:
-      return 'completed';
+      return 'Completed';
+    case TaskStatusApi.InReview:
+      return 'InReview';
+    case TaskStatusApi.Accept:
+      return 'Accept';
+    case TaskStatusApi.Reject:
+      return 'Reject';
+    case TaskStatusApi.Done:
+      return 'Done';
+    case TaskStatusApi.Pending:
+      return 'Pending';
+    case TaskStatusApi.Block:
+      return 'Block';
     default:
-      return 'todo';
+      return 'Open';
   }
 }
 
 export function statusToApi(s: TaskStatus): number {
   switch (s) {
-    case 'todo':
-      return TaskStatusApi.Todo;
-    case 'in_progress':
+    case 'Open':
+      return TaskStatusApi.Open;
+    case 'InProgress':
       return TaskStatusApi.InProgress;
-    case 'completed':
+    case 'Completed':
       return TaskStatusApi.Completed;
+    case 'InReview':
+      return TaskStatusApi.InReview;
+    case 'Accept':
+      return TaskStatusApi.Accept;
+    case 'Reject':
+      return TaskStatusApi.Reject;
+    case 'Done':
+      return TaskStatusApi.Done;
+    case 'Pending':
+      return TaskStatusApi.Pending;
+    case 'Block':
+      return TaskStatusApi.Block;
     default:
-      return TaskStatusApi.Todo;
+      return TaskStatusApi.Open;
   }
 }
 
 export function priorityFromApi(n: number): TaskPriority {
   switch (n) {
     case TaskPriorityApi.Low:
-      return 'low';
+      return 'Low';
     case TaskPriorityApi.Medium:
-      return 'medium';
+      return 'Medium';
     case TaskPriorityApi.High:
-      return 'high';
+      return 'High';
+    case TaskPriorityApi.Urgent:
+      return 'Urgent';
     default:
-      return 'medium';
+      return 'Medium';
   }
 }
 
 export function priorityToApi(p: TaskPriority): number {
   switch (p) {
-    case 'low':
+    case 'Low':
       return TaskPriorityApi.Low;
-    case 'medium':
+    case 'Medium':
       return TaskPriorityApi.Medium;
-    case 'high':
+    case 'High':
       return TaskPriorityApi.High;
+    case 'Urgent':
+      return TaskPriorityApi.Urgent;
     default:
       return TaskPriorityApi.Medium;
   }
@@ -84,21 +109,21 @@ export function toCreateDto(params: AddTaskInput, title: string): CreateTaskDto 
   return {
     Title: title,
     Description: params.description ?? '',
-    Priority: priorityToApi(params.priority ?? 'medium'),
-    Status: statusToApi(params.status ?? 'todo'),
+    Priority: priorityToApi(params.priority ?? 'Medium'),
+    Status: statusToApi(params.status ?? 'Open'),
   };
 }
 
 export function toUpdateDto(
   id: number,
   input: UpdateTaskInput,
-  existing: Pick<Task, 'title' | 'description' | 'priority' | 'status'> | undefined
+  existing: Pick<Task, 'title' | 'description' | 'priority' | 'status'> | undefined,
 ): UpdateTaskDto {
   return {
     Id: id,
     Title: (input.title ?? existing?.title ?? '').trim(),
     Description: input.description ?? existing?.description ?? '',
-    Priority: priorityToApi(input.priority ?? existing?.priority ?? 'medium'),
-    Status: statusToApi(input.status ?? existing?.status ?? 'todo'),
+    Priority: priorityToApi(input.priority ?? existing?.priority ?? 'Medium'),
+    Status: statusToApi(input.status ?? existing?.status ?? 'Open'),
   };
 }

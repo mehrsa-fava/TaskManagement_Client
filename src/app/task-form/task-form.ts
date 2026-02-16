@@ -19,9 +19,9 @@ export class TaskForm implements OnInit {
   title = '';
   description = '';
   dueDateInput = '';
-  priority: TaskPriority = 'medium';
+  priority: TaskPriority = 'Medium';
   category = '';
-  status: TaskStatus = 'todo';
+  status: TaskStatus = 'Open';
   error = '';
   submitting = false;
   readonly isEditMode = signal(false);
@@ -72,9 +72,9 @@ export class TaskForm implements OnInit {
     this.title = '';
     this.description = '';
     this.dueDateInput = '';
-    this.priority = 'medium';
+    this.priority = 'Medium';
     this.category = '';
-    this.status = 'todo';
+    this.status = 'Open';
   }
 
   submit(): void {
