@@ -1,0 +1,23 @@
+⭐ Do you NEED 'tailwind.config.js' file?
+
+❌ No — if you're using only built-in Tailwind classes
+(Tailwind works automatically.)
+
+✅ Yes — if you want ANY custom things:
+bg-primary, text-primary
+custom breakpoints
+custom animations
+custom shadows
+custom fonts
+
+Your HTML contains:
+bg-primary
+hover:bg-secondary
+text-primary
+animate-pulse-slow
+🚨 These do NOT exist in Tailwind by default, so you must create a config file.
+
+📌 How to generate Tailwind config in Angular 17
+Run this in your project root:
+npx tailwindcss init
+________________________________________________________________________________________________________

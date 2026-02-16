@@ -1,3 +1,49 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'tailwindcss';
 
-@import "tailwindcss";
+/* Custom animations */
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Custom card styling - though you could use just Tailwind classes */
+.login-card {
+  box-shadow:
+    0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Define custom colors using CSS variables */
+:root {
+  --color-primary: #4f46e5; /* Indigo-600 */
+  --color-secondary: #6366f1; /* Indigo-500 */
+}
+
+.bg-primary {
+  background-color: var(--color-primary);
+}
+
+.bg-primary:hover {
+  background-color: var(--color-secondary);
+}
+
+.text-primary {
+  color: var(--color-primary);
+}
+
+.text-primary:hover {
+  color: var(--color-secondary);
+}
+
+.focus\:ring-primary:focus {
+  --tw-ring-color: var(--color-primary);
+}

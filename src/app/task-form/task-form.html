@@ -1,0 +1,124 @@
+<div class="min-h-screen bg-slate-50 text-slate-900">
+  <div class="mx-auto max-w-2xl px-4 py-10">
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold tracking-tight text-slate-800">
+        {{ isEditMode() ? 'Edit task' : 'New task' }}
+      </h1>
+      <p class="mt-1 text-slate-500">
+        {{ isEditMode() ? 'Update the task.' : 'Add a task to your list.' }}
+      </p>
+    </header>
+
+    <form (ngSubmit)="submit()" class="space-y-4">
+      <div>
+        <label for="task-title" class="mb-1 block text-sm font-medium text-slate-700">
+          Task title
+        </label>
+        <input
+          id="task-title"
+          type="text"
+          [(ngModel)]="title"
+          name="title"
+          placeholder="e.g. Buy groceries"
+          class="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          autofocus
+        />
+      </div>
+
+      <div>
+        <label for="task-description" class="mb-1 block text-sm font-medium text-slate-700">
+          Description
+        </label>
+        <textarea
+          id="task-description"
+          [(ngModel)]="description"
+          name="description"
+          rows="3"
+          placeholder="Optional notes"
+          class="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        ></textarea>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label for="task-due" class="mb-1 block text-sm font-medium text-slate-700">
+            Due date
+          </label>
+          <input
+            id="task-due"
+            type="date"
+            [(ngModel)]="dueDateInput"
+            name="dueDateInput"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label for="task-priority" class="mb-1 block text-sm font-medium text-slate-700">
+            Priority
+          </label>
+          <select
+            id="task-priority"
+            [(ngModel)]="priority"
+            name="priority"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            @for (opt of priorityOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label for="task-category" class="mb-1 block text-sm font-medium text-slate-700">
+            Category
+          </label>
+          <input
+            id="task-category"
+            type="text"
+            [(ngModel)]="category"
+            name="category"
+            placeholder="e.g. Work"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label for="task-status" class="mb-1 block text-sm font-medium text-slate-700">
+            Status
+          </label>
+          <select
+            id="task-status"
+            [(ngModel)]="status"
+            name="status"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            @for (opt of statusOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (error) {
+        <p class="text-sm text-red-600">
+          {{ error }}
+        </p>
+      }
+      <div class="flex gap-3">
+        <button
+          type="submit"
+          class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        >
+          {{ isEditMode() ? 'Save changes' : 'Add task' }}
+        </button>
+        <a
+          routerLink="/task/list"
+          class="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        >
+          Back to list
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
