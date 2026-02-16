@@ -32,8 +32,8 @@ export class TaskList implements OnInit {
   readonly filteredTasks = computed(() => {
     const tasks = this.taskService.tasks();
     const f = this.filterSignal();
-    if (f === 'active') return tasks.filter((t) => t.status !== 'Completed');
-    if (f === 'completed') return tasks.filter((t) => t.status === 'Completed');
+    if (f === 'active') return tasks.filter((t) => t.status !== 'Done');
+    if (f === 'completed') return tasks.filter((t) => t.status === 'Done');
     return tasks;
   });
 

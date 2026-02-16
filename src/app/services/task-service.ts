@@ -142,7 +142,7 @@ export class TaskService {
   }
 
   clearCompleted(): Observable<boolean> {
-    const completed = this.tasksSignal().filter((t) => t.status === 'Completed');
+    const completed = this.tasksSignal().filter((t) => t.status === 'Done');
     if (completed.length === 0) return of(true);
     return forkJoin(completed.map((t) => this.deleteTask(t.id))).pipe(
       map((results) => results.every(Boolean)),
