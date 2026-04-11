@@ -6,7 +6,7 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-lg p-8 sm:p-10">
-      <form>
+      <form [formGroup]="loginForm">
         <div class="mb-5">
           <label for="email" class="block text-sm font-medium text-gray-700 mb-1"
             >Email Address</label
@@ -18,13 +18,16 @@
             <input
               type="email"
               id="email"
-              [(ngModel)]="email"
+              formControlName="email"
               name="email"
               class="w-full pl-10 pr-3 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
               placeholder="you@example.com"
               required
             />
           </div>
+          @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {//?
+            <p class="text-sm text-red-600 mt-1">Please enter a valid email.</p>
+          }
         </div>
 
         <div class="mb-5">
@@ -38,18 +41,22 @@
             <input
               type="password"
               id="password"
-              [(ngModel)]="password"
+              formControlName="password"
               name="password"
               class="w-full pl-10 pr-3 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
               placeholder="••••••••"
               required
             />
           </div>
+
+          @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+            <p class="text-sm text-red-600 mt-1">Password is required.</p>
+          }
         </div>
 
         @if (errorMessage) {
-        <p class="mb-3 text-sm text-red-600">{{ errorMessage }}</p>
-      }
+          <p class="mb-3 text-sm text-red-600">{{ errorMessage }}</p>
+        }
         <button
           (click)="login()"
           type="button"
@@ -61,7 +68,9 @@
         <div class="mt-8 text-center">
           <p class="text-gray-600 text-sm">
             Don't have an account?
-            <a routerLink="/register" class="font-medium text-indigo-600 hover:text-indigo-500 transition"
+            <a
+              routerLink="/register"
+              class="font-medium text-indigo-600 hover:text-indigo-500 transition"
               >Sign up</a
             >
           </p>
