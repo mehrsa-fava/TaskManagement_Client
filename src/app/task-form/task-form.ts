@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { TaskService } from '../services/task-service';
 import {
   type Task,
@@ -12,18 +12,16 @@ import {
 
 @Component({
   selector: 'app-task-form',
-  imports: [RouterLink, FormsModule],
+  standalone: true,
+  imports: [RouterLink, ReactiveFormsModule],
   templateUrl: './task-form.html',
 })
 export class TaskForm implements OnInit {
-  title = '';
-  description = '';
-  dueDateInput = '';
-  priority: TaskPriority = 'Medium';
-  category = '';
-  status: TaskStatus = 'Open';
+  taskForm!: FormGroup;
+
   error = '';
   submitting = false;
+
   readonly isEditMode = signal(false);
   private taskId: string | null = null;
 
@@ -33,65 +31,84 @@ export class TaskForm implements OnInit {
   constructor(
     private taskService: TaskService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
+    this.initForm();
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      let task = this.taskService.getTask(id);
-      if (task) {
-        this.setFormFromTask(task);
-        this.taskId = id;
-        this.isEditMode.set(true);
-      } else {
-        this.taskService.getTaskById(id).subscribe((t) => {
-          if (t) {
-            this.setFormFromTask(t);
-            this.taskId = id;
-            this.isEditMode.set(true);
-          }
-        });
-      }
+      this.loadTask(id);
     }
   }
 
-  private setFormFromTask(task: Task): void {
-    this.title = task.title;
-    this.description = task.description ?? '';
-    this.priority = task.priority;
-    this.category = task.category ?? '';
-    this.status = task.status;
-    this.dueDateInput =
-      task.dueDate != null
-        ? new Date(task.dueDate).toISOString().slice(0, 10)
-        : '';
+  private initForm(): void {
+    this.taskForm = new FormGroup({
+      title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+      description: new FormControl('', { nonNullable: true }),
+      dueDateInput: new FormControl('', { nonNullable: true }),
+      priority: new FormControl<TaskPriority>('Medium', { nonNullable: true }),
+      category: new FormControl('', { nonNullable: true }),
+      status: new FormControl<TaskStatus>('Open', { nonNullable: true }),
+    });
+  }
+
+  private loadTask(id: string): void {
+    const localTask = this.taskService.getTask(id);
+
+    if (localTask) {
+      this.applyTask(localTask, id);
+    } else {
+      this.taskService.getTaskById(id).subscribe((task) => {
+        if (task) this.applyTask(task, id);
+      });
+    }
+  }
+
+  private applyTask(task: Task, id: string): void {
+    this.taskId = id;
+    this.isEditMode.set(true);
+
+    this.taskForm.patchValue({
+      title: task.title,
+      description: task.description ?? '',
+      priority: task.priority,
+      category: task.category ?? '',
+      status: task.status,
+      dueDateInput: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : '',
+    });
   }
 
   private resetForm(): void {
-    this.title = '';
-    this.description = '';
-    this.dueDateInput = '';
-    this.priority = 'Medium';
-    this.category = '';
-    this.status = 'Open';
+    this.taskForm.reset({
+      title: '',
+      description: '',
+      dueDateInput: '',
+      priority: 'Medium',
+      category: '',
+      status: 'Open',
+    });
   }
 
   submit(): void {
     this.error = '';
-    const t = this.title.trim();
-    if (!t) {
-      this.error = 'Please enter a task title.';
+
+    if (this.taskForm.invalid) {
+      this.taskForm.markAllAsTouched();
       return;
     }
+
     if (this.submitting) return;
     this.submitting = true;
 
+    const formValue = this.taskForm.getRawValue();
+
     const payload = {
-      title: t,
-      description: this.description.trim() || undefined,
-      priority: this.priority,
-      status: this.status,
+      title: formValue.title.trim(),
+      description: formValue.description.trim() || undefined,
+      priority: formValue.priority,
+      status: formValue.status,
     };
 
     if (this.taskId) {
