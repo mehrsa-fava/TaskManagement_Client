@@ -10,6 +10,11 @@ export type TaskStatus =
   | 'Block';
 export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
 
+export interface TaskUser {
+  id: string;
+  fullName: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -22,6 +27,7 @@ export interface Task {
   category?: string;
   createdAt: number;
   updatedAt: number;
+  user: TaskUser;
 }
 
 export type AddTaskInput = {

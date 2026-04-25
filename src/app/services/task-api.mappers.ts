@@ -92,6 +92,7 @@ export function apiToTask(api: TaskApiResponse): Task {
   const status = api.Status ?? raw['status'];
   const priority = api.Priority ?? raw['priority'];
   const description = api.Description ?? raw['description'];
+  const user = api.User ?? raw['User'] ?? raw['user'];
   const createdAt = api.CreatedAt ?? raw['createdAt'];
   const updatedAt = api.UpdatedAt ?? raw['updatedAt'];
   return {
@@ -100,6 +101,7 @@ export function apiToTask(api: TaskApiResponse): Task {
     status: statusFromApi(Number(status)),
     description: (description ?? '') as string,
     priority: priorityFromApi(Number(priority)),
+    user: user,
     createdAt: createdAt ? new Date(createdAt as string).getTime() : now,
     updatedAt: updatedAt ? new Date(updatedAt as string).getTime() : now,
   };

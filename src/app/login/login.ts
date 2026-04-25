@@ -38,7 +38,7 @@ export class Login implements OnInit {
 
   login(): void {
     if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched(); //???
+      this.loginForm.markAllAsTouched();
       return;
     }
 

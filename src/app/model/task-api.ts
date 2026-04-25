@@ -35,11 +35,17 @@ export interface UpdateTaskDto {
   Status: number;
 }
 
+export interface UserDto {
+  id: string;
+  fullName: string;
+}
+
 export interface TaskApiResponse {
   Id: number;
   Title: string;
   Description?: string;
   Priority: number;
+  User: UserDto;
   Status: number;
   CreatedAt?: string;
   UpdatedAt?: string;
