@@ -87,6 +87,25 @@
             }
           </button>
           <div class="min-w-0 flex-1">
+            @if (task.priority && task.priority !== 'Medium') {
+              <span class="inline-flex items-center" [title]="task.priority + ' priority'">
+                <svg
+                  class="size-4"
+                  [class.text-slate-400]="task.priority === 'Low'"
+                  [class.text-yellow-500]="task.priority === 'High'"
+                  [class.text-red-500]="task.priority === 'Urgent'"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M5 3v18M5 3h10l-2 4 2 4H5"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    fill="currentColor"
+                  />
+                </svg>
+              </span>
+            }
             <span
               class="text-slate-800"
               [class.line-through]="isCompleted(task)"
@@ -124,19 +143,7 @@
               >
                 {{ task.status }}
               </span>
-              @if (task.priority && task.priority !== 'Medium') {
-                <span
-                  class="inline-flex rounded-md px-2 py-0.5 text-xs font-medium"
-                  [class.bg-slate-100]="task.priority === 'Low'"
-                  [class.text-slate-600]="task.priority === 'Low'"
-                  [class.bg-yellow-100]="task.priority === 'High'"
-                  [class.text-yellow-800]="task.priority === 'High'"
-                  [class.bg-red-100]="task.priority === 'Urgent'"
-                  [class.text-red-800]="task.priority === 'Urgent'"
-                >
-                  {{ task.priority }} priority
-                </span>
-              }
+
               @if (task.category) {
                 <span
                   class="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
