@@ -87,62 +87,160 @@
             }
           </button>
           <div class="min-w-0 flex-1">
-            @if (task.priority && task.priority !== 'Medium') {
-              <span class="inline-flex items-center" [title]="task.priority + ' priority'">
-                <svg
-                  class="size-4"
-                  [class.text-slate-400]="task.priority === 'Low'"
-                  [class.text-yellow-500]="task.priority === 'High'"
-                  [class.text-red-500]="task.priority === 'Urgent'"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
+            <!-- Priority + Title row -->
+            <div class="flex items-center gap-1.5">
+              <!-- Priority dropdown trigger -->
+              <div class="relative inline-flex">
+                <button
+                  type="button"
+                  (click)="startEdit(task, 'priority')"
+                  class="inline-flex items-center rounded p-0.5 transition hover:bg-slate-100"
+                  [title]="task.priority + ' priority'"
                 >
-                  <path
-                    d="M5 3v18M5 3h10l-2 4 2 4H5"
-                    stroke="currentColor"
-                    stroke-width="2"
+                  <svg
+                    class="size-4"
+                    [class]="priorityColorClass(task.priority)"
                     fill="currentColor"
-                  />
-                </svg>
-              </span>
-            }
-            <span
-              class="text-slate-800"
-              [class.line-through]="isCompleted(task)"
-              [class.text-slate-400]="isCompleted(task)"
-            >
-              {{ task.title }}
-            </span>
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M5 3v18M5 3h10l-2 4 2 4H5"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
 
-            @if (task.description) {
-              <p class="mt-0.5 truncate text-sm text-slate-500" [title]="task.description">
+                <!-- Priority dropdown -->
+                @if (isEditing(task.id, 'priority')) {
+                  <div class="edit-dropdown">
+                    @for (opt of priorityOptions; track opt.value) {
+                      <button
+                        type="button"
+                        (click)="selectPriority(task.id, opt.value)"
+                        class="dropdown-item"
+                      >
+                        <svg
+                          class="size-4"
+                          [class]="priorityColorClass(opt.value)"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            d="M5 3v18M5 3h10l-2 4 2 4H5"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            fill="currentColor"
+                          />
+                        </svg>
+                        <span>{{ opt.label }}</span>
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Title inline edit -->
+              @if (isEditing(task.id, 'title')) {
+                <input
+                  type="text"
+                  [(ngModel)]="editValue"
+                  (keydown)="onKeydown($event, task.id)"
+                  (blur)="saveEdit(task.id)"
+                  class="inline-block flex-1 rounded border border-indigo-300 px-2 py-0.5 text-sm font-medium text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                  autofocus
+                />
+              } @else {
+                <span
+                  (click)="startEdit(task, 'title')"
+                  class="cursor-pointer rounded px-1 transition hover:bg-slate-100"
+                  [class.line-through]="isCompleted(task)"
+                  [class.text-slate-400]="isCompleted(task)"
+                  [class.text-slate-800]="!isCompleted(task)"
+                >
+                  {{ task.title }}
+                </span>
+              }
+            </div>
+
+            <!-- Description inline edit -->
+            @if (isEditing(task.id, 'description')) {
+              <input
+                type="text"
+                [(ngModel)]="editValue"
+                (keydown)="onKeydown($event, task.id)"
+                (blur)="saveEdit(task.id)"
+                class="mt-1 block w-full rounded border border-indigo-300 px-2 py-0.5 text-sm text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Description..."
+                autofocus
+              />
+            } @else if (task.description) {
+              <p
+                (click)="startEdit(task, 'description')"
+                class="mt-0.5 cursor-pointer truncate rounded px-1 text-sm text-slate-500 transition hover:bg-slate-100"
+                [title]="task.description"
+              >
                 {{ task.description }}
               </p>
-            }
-            <div class="mt-1 flex flex-wrap gap-2">
-              <span
-                class="inline-flex rounded-md px-2 py-0.5 text-xs font-medium"
-                [class.bg-slate-100]="task.status === 'Open'"
-                [class.text-slate-700]="task.status === 'Open'"
-                [class.bg-amber-100]="task.status === 'InProgress'"
-                [class.text-amber-800]="task.status === 'InProgress'"
-                [class.bg-emerald-100]="task.status === 'Completed'"
-                [class.text-emerald-800]="task.status === 'Completed'"
-                [class.bg-indigo-100]="task.status === 'InReview'"
-                [class.text-indigo-800]="task.status === 'InReview'"
-                [class.bg-purple-100]="task.status === 'Accept'"
-                [class.text-purple-800]="task.status === 'Accept'"
-                [class.bg-red-100]="task.status === 'Reject'"
-                [class.text-red-800]="task.status === 'Reject'"
-                [class.bg-green-100]="task.status === 'Done'"
-                [class.text-green-800]="task.status === 'Done'"
-                [class.bg-blue-100]="task.status === 'Pending'"
-                [class.text-blue-800]="task.status === 'Pending'"
-                [class.bg-gray-100]="task.status === 'Block'"
-                [class.text-gray-800]="task.status === 'Block'"
+            } @else {
+              <p
+                (click)="startEdit(task, 'description')"
+                class="mt-0.5 cursor-pointer rounded px-1 text-sm italic text-slate-400 transition hover:bg-slate-100"
               >
-                {{ task.status }}
-              </span>
+                + Add description
+              </p>
+            }
+
+            <!-- Status & meta row -->
+            <div class="mt-1 flex flex-wrap items-center gap-2">
+              <!-- Status dropdown -->
+              <div class="relative inline-flex">
+                @if (isEditing(task.id, 'status')) {
+                  <div class="edit-dropdown">
+                    @for (opt of statusOptions; track opt.value) {
+                      <button
+                        type="button"
+                        (click)="selectStatus(task.id, opt.value)"
+                        class="dropdown-item"
+                      >
+                        <span
+                          class="inline-flex rounded-md px-2 py-0.5 text-xs font-medium"
+                          [class]="statusBgClass(opt.value) + ' ' + statusTextClass(opt.value)"
+                        >
+                          {{ opt.label }}
+                        </span>
+                      </button>
+                    }
+                  </div>
+                } @else {
+                  <button
+                    type="button"
+                    (click)="startEdit(task, 'status')"
+                    class="inline-flex rounded-md px-2 py-0.5 text-xs font-medium transition hover:opacity-80"
+                    [class.bg-slate-100]="task.status === 'Open'"
+                    [class.text-slate-700]="task.status === 'Open'"
+                    [class.bg-amber-100]="task.status === 'InProgress'"
+                    [class.text-amber-800]="task.status === 'InProgress'"
+                    [class.bg-emerald-100]="task.status === 'Completed'"
+                    [class.text-emerald-800]="task.status === 'Completed'"
+                    [class.bg-indigo-100]="task.status === 'InReview'"
+                    [class.text-indigo-800]="task.status === 'InReview'"
+                    [class.bg-purple-100]="task.status === 'Accept'"
+                    [class.text-purple-800]="task.status === 'Accept'"
+                    [class.bg-red-100]="task.status === 'Reject'"
+                    [class.text-red-800]="task.status === 'Reject'"
+                    [class.bg-green-100]="task.status === 'Done'"
+                    [class.text-green-800]="task.status === 'Done'"
+                    [class.bg-blue-100]="task.status === 'Pending'"
+                    [class.text-blue-800]="task.status === 'Pending'"
+                    [class.bg-gray-100]="task.status === 'Block'"
+                    [class.text-gray-800]="task.status === 'Block'"
+                  >
+                    {{ task.status }}
+                  </button>
+                }
+              </div>
 
               @if (task.category) {
                 <span
