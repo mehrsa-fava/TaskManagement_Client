@@ -6,8 +6,10 @@
   margin-top: 0.25rem;
   display: flex;
   min-width: 10rem;
+  max-height: 12rem;
   flex-direction: column;
   gap: 0.125rem;
+  overflow-y: auto;
   border-radius: 0.5rem;
   border: 1px solid #e2e8f0;
   background-color: #fff;

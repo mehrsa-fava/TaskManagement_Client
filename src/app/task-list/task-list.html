@@ -196,6 +196,32 @@
             <div class="mt-1 flex flex-wrap items-center gap-2">
               <!-- Status dropdown -->
               <div class="relative inline-flex">
+                <button
+                  type="button"
+                  (click)="startEdit(task, 'status')"
+                  class="inline-flex rounded-md px-2 py-0.5 text-xs font-medium transition hover:opacity-80"
+                  [class.bg-slate-100]="task.status === 'Open'"
+                  [class.text-slate-700]="task.status === 'Open'"
+                  [class.bg-amber-100]="task.status === 'InProgress'"
+                  [class.text-amber-800]="task.status === 'InProgress'"
+                  [class.bg-emerald-100]="task.status === 'Completed'"
+                  [class.text-emerald-800]="task.status === 'Completed'"
+                  [class.bg-indigo-100]="task.status === 'InReview'"
+                  [class.text-indigo-800]="task.status === 'InReview'"
+                  [class.bg-purple-100]="task.status === 'Accept'"
+                  [class.text-purple-800]="task.status === 'Accept'"
+                  [class.bg-red-100]="task.status === 'Reject'"
+                  [class.text-red-800]="task.status === 'Reject'"
+                  [class.bg-green-100]="task.status === 'Done'"
+                  [class.text-green-800]="task.status === 'Done'"
+                  [class.bg-blue-100]="task.status === 'Pending'"
+                  [class.text-blue-800]="task.status === 'Pending'"
+                  [class.bg-gray-100]="task.status === 'Block'"
+                  [class.text-gray-800]="task.status === 'Block'"
+                >
+                  {{ task.status }}
+                </button>
+
                 @if (isEditing(task.id, 'status')) {
                   <div class="edit-dropdown">
                     @for (opt of statusOptions; track opt.value) {
@@ -213,32 +239,6 @@
                       </button>
                     }
                   </div>
-                } @else {
-                  <button
-                    type="button"
-                    (click)="startEdit(task, 'status')"
-                    class="inline-flex rounded-md px-2 py-0.5 text-xs font-medium transition hover:opacity-80"
-                    [class.bg-slate-100]="task.status === 'Open'"
-                    [class.text-slate-700]="task.status === 'Open'"
-                    [class.bg-amber-100]="task.status === 'InProgress'"
-                    [class.text-amber-800]="task.status === 'InProgress'"
-                    [class.bg-emerald-100]="task.status === 'Completed'"
-                    [class.text-emerald-800]="task.status === 'Completed'"
-                    [class.bg-indigo-100]="task.status === 'InReview'"
-                    [class.text-indigo-800]="task.status === 'InReview'"
-                    [class.bg-purple-100]="task.status === 'Accept'"
-                    [class.text-purple-800]="task.status === 'Accept'"
-                    [class.bg-red-100]="task.status === 'Reject'"
-                    [class.text-red-800]="task.status === 'Reject'"
-                    [class.bg-green-100]="task.status === 'Done'"
-                    [class.text-green-800]="task.status === 'Done'"
-                    [class.bg-blue-100]="task.status === 'Pending'"
-                    [class.text-blue-800]="task.status === 'Pending'"
-                    [class.bg-gray-100]="task.status === 'Block'"
-                    [class.text-gray-800]="task.status === 'Block'"
-                  >
-                    {{ task.status }}
-                  </button>
                 }
               </div>
 

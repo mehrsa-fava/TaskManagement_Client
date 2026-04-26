@@ -21,6 +21,7 @@ export type EditingField = 'title' | 'description' | 'status' | 'priority' | nul
   selector: 'app-task-list',
   imports: [RouterLink, FormsModule],
   templateUrl: './task-list.html',
+  styleUrl: './task-list.css',
 })
 export class TaskList implements OnInit {
   private readonly filterSignal = signal<TaskListFilter>('all');
