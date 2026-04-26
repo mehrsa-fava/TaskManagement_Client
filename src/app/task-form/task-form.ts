@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { TaskService } from '../services/task-service';
+import { ProfileMenu } from '../profile-menu/profile-menu';
 import {
   type Task,
   type TaskStatus,

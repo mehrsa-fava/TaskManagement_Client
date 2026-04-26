@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TaskService } from '../services/task-service';
 import { AuthService } from '../services/auth-service';
 import { formatShortDate } from '../utils/date.util';
+import { ProfileMenu } from '../profile-menu/profile-menu';
 import type { Task, TaskStatus, TaskPriority } from '../model/task';
 import { TASK_STATUS_OPTIONS, TASK_PRIORITY_OPTIONS } from '../model/task';
 
@@ -19,7 +20,7 @@ export type EditingField = 'title' | 'description' | 'status' | 'priority' | nul
 
 @Component({
   selector: 'app-task-list',
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, ProfileMenu],
   templateUrl: './task-list.html',
   styleUrl: './task-list.css',
 })

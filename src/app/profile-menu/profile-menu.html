@@ -1,0 +1,30 @@
+<div class="profile-wrapper">
+  <!-- Avatar circle -->
+  <button
+    type="button"
+    class="avatar-btn"
+    (click)="toggle()"
+    [attr.aria-expanded]="isOpen"
+    aria-label="Toggle profile menu"
+  >
+    <span class="avatar-text">{{ getInitials() }}</span>
+  </button>
+
+  <!-- Dropdown card -->
+  @if (isOpen) {
+    <div class="profile-dropdown">
+      <div class="dropdown-header">
+        <div class="avatar-large">
+          <span>{{ getInitials() }}</span>
+        </div>
+        <div class="user-info">
+          <p class="user-name">{{ currentUser()?.userName }}</p>
+          <p class="user-email">{{ currentUser()?.email }}</p>
+        </div>
+      </div>
+      <div class="dropdown-actions">
+        <button type="button" class="logout-btn" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  }
+</div>
