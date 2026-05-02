@@ -46,7 +46,7 @@ export interface TaskApiResponse {
   Title: string;
   Description?: string;
   Priority: number;
-  User: UserDto;
+  Users: UserDto[];
   Status: number;
   CreatedAt?: string;
   UpdatedAt?: string;

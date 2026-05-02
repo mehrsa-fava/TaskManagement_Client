@@ -27,7 +27,7 @@ export interface Task {
   category?: string;
   createdAt: number;
   updatedAt: number;
-  user: TaskUser;
+  users: TaskUser[];
 }
 
 export type AddTaskInput = {

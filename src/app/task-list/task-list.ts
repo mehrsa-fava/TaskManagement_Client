@@ -40,6 +40,8 @@ export class TaskList implements OnInit {
     const f = this.filterSignal();
     if (f === 'active') return tasks.filter((t) => t.status !== 'Done');
     if (f === 'completed') return tasks.filter((t) => t.status === 'Done');
+
+    console.log(111);
     return tasks;
   });
 
@@ -219,5 +221,10 @@ export class TaskList implements OnInit {
       default:
         return 'text-slate-500';
     }
+  }
+
+  getInitial(name?: string): string {
+    if (!name) return 'U';
+    return name.trim().charAt(0).toUpperCase();
   }
 }
