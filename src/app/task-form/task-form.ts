@@ -1,7 +1,8 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { TaskService } from '../services/task-service';
+import { TaskUserService } from '../services/task-user-service';
 import { ProfileMenu } from '../profile-menu/profile-menu';
 import {
   type Task,
@@ -29,6 +30,12 @@ export class TaskForm implements OnInit {
   readonly statusOptions = TASK_STATUS_OPTIONS;
   readonly priorityOptions = TASK_PRIORITY_OPTIONS;
 
+  private readonly taskUserService = inject(TaskUserService);
+  readonly users = this.taskUserService.users;
+  readonly usersLoading = this.taskUserService.loading;
+  readonly usersError = this.taskUserService.error;
+  readonly selectedUserIds = signal<Set<string>>(new Set());
+
   constructor(
     private taskService: TaskService,
     private router: Router,
@@ -37,11 +44,28 @@ export class TaskForm implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+    this.taskUserService.loadUsers().subscribe();
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadTask(id);
     }
+  }
+
+  toggleUser(userId: string): void {
+    this.selectedUserIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  }
+
+  isUserSelected(userId: string): boolean {
+    return this.selectedUserIds().has(userId);
   }
 
   private initForm(): void {
@@ -90,6 +114,7 @@ export class TaskForm implements OnInit {
       category: '',
       status: 'Open',
     });
+    this.selectedUserIds.set(new Set());
   }
 
   submit(): void {
@@ -110,6 +135,7 @@ export class TaskForm implements OnInit {
       description: formValue.description.trim() || undefined,
       priority: formValue.priority,
       status: formValue.status,
+      userIds: this.isEditMode() ? undefined : Array.from(this.selectedUserIds()),
     };
 
     if (this.taskId) {

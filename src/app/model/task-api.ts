@@ -25,6 +25,7 @@ export interface CreateTaskDto {
   Description: string;
   Priority: number;
   Status: number;
+  UserIds: string[];
 }
 
 export interface UpdateTaskDto {

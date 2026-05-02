@@ -113,6 +113,7 @@ export function toCreateDto(params: AddTaskInput, title: string): CreateTaskDto 
     Description: params.description ?? '',
     Priority: priorityToApi(params.priority ?? 'Medium'),
     Status: statusToApi(params.status ?? 'Open'),
+    UserIds: params.userIds ?? [],
   };
 }
 

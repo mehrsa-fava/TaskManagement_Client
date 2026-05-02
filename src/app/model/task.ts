@@ -37,6 +37,7 @@ export type AddTaskInput = {
   priority?: TaskPriority;
   category?: string;
   status?: TaskStatus;
+  userIds?: string[];
 };
 
 export type UpdateTaskInput = {
