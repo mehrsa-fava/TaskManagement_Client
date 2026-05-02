@@ -120,7 +120,7 @@ export function toCreateDto(params: AddTaskInput, title: string): CreateTaskDto 
 export function toUpdateDto(
   id: number,
   input: UpdateTaskInput,
-  existing: Pick<Task, 'title' | 'description' | 'priority' | 'status'> | undefined,
+  existing: Pick<Task, 'title' | 'description' | 'priority' | 'status' | 'users'> | undefined,
 ): UpdateTaskDto {
   return {
     Id: id,
@@ -128,5 +128,6 @@ export function toUpdateDto(
     Description: input.description ?? existing?.description ?? '',
     Priority: priorityToApi(input.priority ?? existing?.priority ?? 'Medium'),
     Status: statusToApi(input.status ?? existing?.status ?? 'Open'),
+    UserIds: input.userIds ?? [],
   };
 }

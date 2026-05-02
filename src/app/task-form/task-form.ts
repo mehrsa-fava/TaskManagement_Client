@@ -1,9 +1,11 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { TaskService } from '../services/task-service';
 import { TaskUserService } from '../services/task-user-service';
 import { ProfileMenu } from '../profile-menu/profile-menu';
+import { CommonModule } from '@angular/common';
+
 import {
   type Task,
   type TaskStatus,
@@ -15,7 +17,7 @@ import {
 @Component({
   selector: 'app-task-form',
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [RouterLink, ReactiveFormsModule, CommonModule],
   templateUrl: './task-form.html',
 })
 export class TaskForm implements OnInit {
@@ -23,6 +25,7 @@ export class TaskForm implements OnInit {
 
   error = '';
   submitting = false;
+  searchTerm = signal('');
 
   readonly isEditMode = signal(false);
   private taskId: string | null = null;
@@ -72,9 +75,9 @@ export class TaskForm implements OnInit {
     this.taskForm = new FormGroup({
       title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       description: new FormControl('', { nonNullable: true }),
-      dueDateInput: new FormControl('', { nonNullable: true }),
+      //dueDateInput: new FormControl('', { nonNullable: true }),
       priority: new FormControl<TaskPriority>('Medium', { nonNullable: true }),
-      category: new FormControl('', { nonNullable: true }),
+      //category: new FormControl('', { nonNullable: true }),
       status: new FormControl<TaskStatus>('Open', { nonNullable: true }),
     });
   }
@@ -99,19 +102,23 @@ export class TaskForm implements OnInit {
       title: task.title,
       description: task.description ?? '',
       priority: task.priority,
-      category: task.category ?? '',
+      //category: task.category ?? '',
       status: task.status,
-      dueDateInput: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : '',
+      //dueDateInput: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : '',
     });
+
+    const userIds = task.users?.map((u) => u.id) ?? [];
+
+    this.selectedUserIds.set(new Set(userIds));
   }
 
   private resetForm(): void {
     this.taskForm.reset({
       title: '',
       description: '',
-      dueDateInput: '',
+      //dueDateInput: '',
       priority: 'Medium',
-      category: '',
+      //category: '',
       status: 'Open',
     });
     this.selectedUserIds.set(new Set());
@@ -135,7 +142,8 @@ export class TaskForm implements OnInit {
       description: formValue.description.trim() || undefined,
       priority: formValue.priority,
       status: formValue.status,
-      userIds: this.isEditMode() ? undefined : Array.from(this.selectedUserIds()),
+      //userIds: this.isEditMode() ? undefined : Array.from(this.selectedUserIds()),
+      userIds: Array.from(this.selectedUserIds()),
     };
 
     if (this.taskId) {
@@ -168,4 +176,29 @@ export class TaskForm implements OnInit {
       });
     }
   }
+
+  getInitial(name?: string): string {
+    if (!name) return 'U';
+    return name.trim().charAt(0).toUpperCase();
+  }
+
+  getAvatarColor(id: string): string {
+    const colors = ['bg-indigo-500', 'bg-green-500', 'bg-red-500', 'bg-yellow-500', 'bg-pink-500'];
+
+    let hash = 0;
+
+    for (let i = 0; i < id.length; i++) {
+      hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  filteredUsers = computed(() => {
+    const term = this.searchTerm().toLowerCase().trim();
+
+    if (!term) return this.users();
+
+    return this.users().filter((u) => u.fullName.toLowerCase().includes(term));
+  });
 }

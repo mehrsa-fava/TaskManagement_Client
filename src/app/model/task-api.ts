@@ -34,6 +34,7 @@ export interface UpdateTaskDto {
   Description: string;
   Priority: number;
   Status: number;
+  UserIds: string[];
 }
 
 export interface UserDto {

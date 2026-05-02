@@ -100,43 +100,111 @@
         </div>
       </div> -->
 
-      @if (!isEditMode()) {
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700"> Assign users </label>
+      <!--start Users-->
+      <div class="space-y-2">
+        <label class="mb-1 block text-sm font-medium text-slate-700"> Assign users </label>
 
-          @if (usersLoading()) {
-            <p class="text-sm text-slate-500">Loading users...</p>
-          }
-
-          @if (usersError()) {
-            <p class="text-sm text-red-600">{{ usersError() }}</p>
-          }
-
-          @if (users().length > 0) {
-            <div
-              class="max-h-48 overflow-y-auto rounded-xl border border-slate-300 bg-white p-2 shadow-sm"
-            >
-              @for (user of users(); track user.id) {
-                <label
-                  class="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-slate-50"
+        <!-- Selected users preview -->
+        @if (users().length > 0) {
+          <div class="flex flex-wrap gap-2">
+            @for (user of users(); track user.id) {
+              @if (isUserSelected(user.id)) {
+                <div
+                  class="flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-sm text-indigo-700 border border-indigo-100"
                 >
-                  <input
-                    type="checkbox"
-                    [checked]="isUserSelected(user.id)"
-                    (change)="toggleUser(user.id)"
-                    class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <span class="text-sm text-slate-900">{{ user.fullName }}</span>
-                </label>
+                  <div
+                    class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white"
+                    [ngClass]="getAvatarColor(user.id)"
+                  >
+                    {{ getInitial(user.fullName) }}
+                  </div>
+
+                  <span class="max-w-[140px] truncate">
+                    {{ user.fullName }}
+                  </span>
+
+                  <button
+                    type="button"
+                    (click)="toggleUser(user.id)"
+                    class="ml-1 text-indigo-500 hover:text-indigo-700"
+                  >
+                    ✕
+                  </button>
+                </div>
+              }
+            }
+          </div>
+        }
+
+        <!-- Loading / error -->
+        @if (usersLoading()) {
+          <div class="text-sm text-slate-500">Loading users...</div>
+        }
+
+        @if (usersError()) {
+          <div class="text-sm text-red-600">{{ usersError() }}</div>
+        }
+
+        <!-- User list -->
+        @if (users().length > 0) {
+          <div class="mt-2 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <!-- Optional search UI placeholder (no logic required yet) -->
+            <div class="border-b border-slate-100 p-2">
+              <input
+                type="text"
+                placeholder="Search users..."
+                class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                [value]="searchTerm()"
+                (input)="searchTerm.set($any($event.target).value)"
+              />
+            </div>
+
+            <div class="max-h-64 overflow-y-auto">
+              @for (user of filteredUsers(); track user.id) {
+                <button
+                  type="button"
+                  (click)="toggleUser(user.id)"
+                  class="w-full flex items-center gap-3 px-3 py-3 text-left transition hover:bg-slate-50"
+                  [class.bg-indigo-50]="isUserSelected(user.id)"
+                >
+                  <!-- Avatar -->
+                  <div
+                    class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold text-white"
+                    [ngClass]="getAvatarColor(user.id)"
+                  >
+                    {{ getInitial(user.fullName) }}
+                  </div>
+
+                  <!-- Name + hint -->
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-800 truncate">
+                      {{ user.fullName }}
+                    </p>
+                    <!-- <p class="text-xs text-slate-400">bio:</p> -->
+                  </div>
+
+                  <!-- Checkbox style indicator -->
+                  <div class="flex items-center">
+                    <div
+                      class="h-5 w-5 rounded-md border flex items-center justify-center"
+                      [class.bg-indigo-600]="isUserSelected(user.id)"
+                      [class.border-indigo-600]="isUserSelected(user.id)"
+                      [class.border-slate-300]="!isUserSelected(user.id)"
+                    >
+                      @if (isUserSelected(user.id)) {
+                        <span class="text-white text-xs">✓</span>
+                      }
+                    </div>
+                  </div>
+                </button>
               }
             </div>
-          }
-
-          @if (users().length === 0 && !usersLoading() && !usersError()) {
-            <p class="text-sm text-slate-500">No users available.</p>
-          }
-        </div>
-      }
+          </div>
+        } @else {
+          <div class="text-sm text-slate-500 px-2 py-2">No users available.</div>
+        }
+      </div>
+      <!--end Users-->
 
       @if (error) {
         <p class="text-sm text-red-600">

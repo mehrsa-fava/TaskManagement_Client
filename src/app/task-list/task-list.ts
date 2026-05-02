@@ -62,7 +62,7 @@ export class TaskList implements OnInit {
     return task.status === 'Done';
   }
 
-  formatDueDate = formatShortDate;
+  //formatDueDate = formatShortDate;
 
   toggle(task: Task): void {
     this.taskService.toggleCompleted(task.id).subscribe();

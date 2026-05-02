@@ -22,9 +22,9 @@ export interface Task {
   /** @deprecated Use status instead. Kept for migration only. */
   completed?: boolean;
   description?: string;
-  dueDate?: number;
+  //dueDate?: number;
   priority: TaskPriority;
-  category?: string;
+  //category?: string;
   createdAt: number;
   updatedAt: number;
   users: TaskUser[];
@@ -33,9 +33,9 @@ export interface Task {
 export type AddTaskInput = {
   title: string;
   description?: string;
-  dueDate?: number;
+  //dueDate?: number;
   priority?: TaskPriority;
-  category?: string;
+  //category?: string;
   status?: TaskStatus;
   userIds?: string[];
 };
@@ -43,10 +43,11 @@ export type AddTaskInput = {
 export type UpdateTaskInput = {
   title?: string;
   description?: string;
-  dueDate?: number;
+  //dueDate?: number;
   priority?: TaskPriority;
-  category?: string;
+  //category?: string;
   status?: TaskStatus;
+  userIds?: string[];
 };
 
 /** Options for status and priority selects (shared by form and list). */
