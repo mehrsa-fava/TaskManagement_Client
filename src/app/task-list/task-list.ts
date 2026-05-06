@@ -1,7 +1,9 @@
-import { Component, computed, signal, OnInit } from '@angular/core';
+import { Component, computed, signal, OnInit, HostListener } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '../services/task-service';
+import { TaskUserService } from '../services/task-user-service';
 import { AuthService } from '../services/auth-service';
 import { formatShortDate } from '../utils/date.util';
 import { ProfileMenu } from '../profile-menu/profile-menu';
@@ -16,11 +18,11 @@ const FILTER_TABS: { value: TaskListFilter; label: string }[] = [
   { value: 'completed', label: 'Completed' },
 ];
 
-export type EditingField = 'title' | 'description' | 'status' | 'priority' | null;
+export type EditingField = 'title' | 'description' | 'status' | 'priority' | 'users' | null;
 
 @Component({
   selector: 'app-task-list',
-  imports: [RouterLink, FormsModule, ProfileMenu],
+  imports: [RouterLink, FormsModule, ProfileMenu, NgClass],
   templateUrl: './task-list.html',
   styleUrl: './task-list.css',
 })
@@ -29,6 +31,7 @@ export class TaskList implements OnInit {
 
   constructor(
     protected taskService: TaskService,
+    protected taskUserService: TaskUserService,
     private readonly authService: AuthService,
     private readonly router: Router,
   ) {}
@@ -47,6 +50,7 @@ export class TaskList implements OnInit {
 
   ngOnInit(): void {
     this.taskService.loadTasks().subscribe();
+    this.taskUserService.loadUsers().subscribe();
   }
 
   logout(): void {
@@ -81,6 +85,7 @@ export class TaskList implements OnInit {
   readonly editingTaskId = signal<string | null>(null);
   readonly editingField = signal<EditingField>(null);
   readonly editValue = signal<string>('');
+  readonly selectedUserIds = signal<Set<string>>(new Set());
 
   readonly statusOptions = TASK_STATUS_OPTIONS;
   readonly priorityOptions = TASK_PRIORITY_OPTIONS;
@@ -108,6 +113,7 @@ export class TaskList implements OnInit {
     this.editingTaskId.set(null);
     this.editingField.set(null);
     this.editValue.set('');
+    this.selectedUserIds.set(new Set());
   }
 
   saveEdit(taskId: string): void {
@@ -144,6 +150,68 @@ export class TaskList implements OnInit {
     } else if (event.key === 'Escape') {
       this.cancelEdit();
     }
+  }
+
+  startUsersEdit(task: Task): void {
+    this.editingTaskId.set(task.id);
+    this.editingField.set('users');
+    this.selectedUserIds.set(new Set((task.users ?? []).map((u) => u.id)));
+  }
+
+  toggleUserInEdit(userId: string): void {
+    this.selectedUserIds.update((current) => {
+      const next = new Set(current);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  }
+
+  isUserSelectedInEdit(userId: string): boolean {
+    return this.selectedUserIds().has(userId);
+  }
+
+  saveUsersEdit(taskId: string): void {
+    const task = this.taskService.getTask(taskId);
+    if (!task) {
+      this.cancelEdit();
+      return;
+    }
+
+    const nextUserIds = Array.from(this.selectedUserIds());
+    const currentUserIds = (task.users ?? []).map((u) => u.id);
+    const hasChanges =
+      nextUserIds.length !== currentUserIds.length ||
+      nextUserIds.some((id) => !currentUserIds.includes(id));
+
+    if (!hasChanges) {
+      this.cancelEdit();
+      return;
+    }
+
+    this.taskService.updateTask(taskId, { userIds: nextUserIds }).subscribe(() => {
+      this.cancelEdit();
+      this.taskService.loadTasks().subscribe();
+    });
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.editingField() !== 'users') return;
+
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.users-edit-container')) return;
+
+    const taskId = this.editingTaskId();
+    if (!taskId) {
+      this.cancelEdit();
+      return;
+    }
+
+    this.saveUsersEdit(taskId);
   }
 
   selectStatus(taskId: string, status: TaskStatus): void {
@@ -226,5 +294,17 @@ export class TaskList implements OnInit {
   getInitial(name?: string): string {
     if (!name) return 'U';
     return name.trim().charAt(0).toUpperCase();
+  }
+
+  getAvatarColor(id: string): string {
+    const colors = ['bg-indigo-500', 'bg-green-500', 'bg-red-500', 'bg-yellow-500', 'bg-pink-500'];
+
+    let hash = 0;
+
+    for (let i = 0; i < id.length; i++) {
+      hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    return colors[Math.abs(hash) % colors.length];
   }
 }

@@ -248,13 +248,70 @@
               } -->
             </div>
           </div>
-          <div class="flex -space-x-2">
-            @for (user of task.users; track user.id) {
-              <div
-                class="w-7 h-7 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-semibold border-2 border-white"
-                title="{{ user?.fullName ?? 'Unknown' }}"
-              >
-                {{ getInitial(user?.fullName) }}
+          <div class="relative users-edit-container">
+            <button
+              type="button"
+              (click)="startUsersEdit(task)"
+              class="flex -space-x-2 rounded-md p-0.5 transition hover:bg-slate-100"
+              title="Assign users"
+            >
+              @if (task.users.length > 0) {
+                @for (user of task.users; track user.id) {
+                  <div
+                    class="w-7 h-7 rounded-full text-white flex items-center justify-center text-xs font-semibold border-2 border-white"
+                    [ngClass]="getAvatarColor(user.id)"
+                    title="{{ user?.fullName ?? 'Unknown' }}"
+                  >
+                    {{ getInitial(user?.fullName) }}
+                  </div>
+                }
+              } @else {
+                <div
+                  class="h-7 rounded-full border border-dashed border-slate-300 px-2 text-xs text-slate-500 inline-flex items-center"
+                >
+                  + Users
+                </div>
+              }
+            </button>
+
+            @if (isEditing(task.id, 'users')) {
+              <div class="edit-dropdown right-0 mt-2 w-64 max-h-64 overflow-auto">
+                @if (taskUserService.loading()) {
+                  <p class="px-3 py-2 text-sm text-slate-500">Loading users...</p>
+                } @else if (taskUserService.error()) {
+                  <p class="px-3 py-2 text-sm text-red-600">{{ taskUserService.error() }}</p>
+                } @else if (taskUserService.users().length === 0) {
+                  <p class="px-3 py-2 text-sm text-slate-500">No users available.</p>
+                } @else {
+                  @for (user of taskUserService.users(); track user.id) {
+                    <button
+                      type="button"
+                      (click)="toggleUserInEdit(user.id)"
+                      class="dropdown-item w-full"
+                    >
+                      <span class="inline-flex items-center gap-2 min-w-0">
+                        <span class="relative inline-flex">
+                          <span
+                            class="w-6 h-6 rounded-full text-white inline-flex items-center justify-center text-xs font-semibold border-2"
+                            [ngClass]="getAvatarColor(user.id)"
+                            [class.border-red-500]="isUserSelectedInEdit(user.id)"
+                            [class.border-transparent]="!isUserSelectedInEdit(user.id)"
+                          >
+                            {{ getInitial(user.fullName) }}
+                          </span>
+                          @if (isUserSelectedInEdit(user.id)) {
+                            <span
+                              class="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-red-500 text-white text-[9px] leading-none inline-flex items-center justify-center"
+                            >
+                              x
+                            </span>
+                          }
+                        </span>
+                        <span class="truncate">{{ user.fullName }}</span>
+                      </span>
+                    </button>
+                  }
+                }
               </div>
             }
           </div>

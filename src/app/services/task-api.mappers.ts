@@ -128,6 +128,6 @@ export function toUpdateDto(
     Description: input.description ?? existing?.description ?? '',
     Priority: priorityToApi(input.priority ?? existing?.priority ?? 'Medium'),
     Status: statusToApi(input.status ?? existing?.status ?? 'Open'),
-    UserIds: input.userIds ?? [],
+    UserIds: input.userIds ?? (existing?.users ?? []).map((u) => u.id),
   };
 }
