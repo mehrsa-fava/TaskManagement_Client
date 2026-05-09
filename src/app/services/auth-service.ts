@@ -35,7 +35,10 @@ export class AuthService {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
       const parsed = JSON.parse(raw) as User;
-      return parsed?.token ?? parsed?.id ? parsed : null;
+      if (!parsed?.token || !parsed?.refreshToken) {
+        return null;
+      }
+      return parsed;
     } catch {
       return null;
     }

@@ -16,6 +16,14 @@ export class UserService {
     return this.http.post<LoginResponse>(`${ACCOUNT}/login`, { email, password });
   }
 
+  refreshToken(refreshToken: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${ACCOUNT}/refresh-token`, JSON.stringify(refreshToken), {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
   register(
     firstName: string,
     lastName: string,

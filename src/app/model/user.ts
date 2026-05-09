@@ -3,6 +3,8 @@ export interface User {
   userName: string | null;
   email: string | null;
   token: string | null;
+  refreshToken: string | null;
+  refreshTokenExpiresAt: string | null;
 }
 
 export interface LoginResponse {
