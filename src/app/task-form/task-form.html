@@ -10,6 +10,32 @@
     </header>
 
     <form [formGroup]="taskForm" (ngSubmit)="submit()" class="space-y-4">
+      @if (!isEditMode()) {
+        <div>
+          <label for="task-project" class="mb-1 block text-sm font-medium text-slate-700">
+            Project
+          </label>
+          <select
+            id="task-project"
+            formControlName="projectId"
+            name="projectId"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option [ngValue]="null">Select a project</option>
+            @for (p of projectService.projects(); track p.id) {
+              <option [ngValue]="p.id">{{ p.title }}</option>
+            }
+          </select>
+        </div>
+      } @else {
+        <div
+          class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+        >
+          Project:
+          <span class="font-medium text-slate-900">{{ projectLabel() }}</span>
+        </div>
+      }
+
       <div>
         <label for="task-title" class="mb-1 block text-sm font-medium text-slate-700">
           Task title
@@ -219,7 +245,7 @@
           {{ isEditMode() ? 'Save changes' : 'Add task' }}
         </button>
         <a
-          routerLink="/task/list"
+          [routerLink]="taskListBackLink()"
           class="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
           Back to list

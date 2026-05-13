@@ -1,0 +1,96 @@
+<div class="min-h-screen bg-slate-50 text-slate-900">
+  <div class="mx-auto max-w-2xl px-4 py-10">
+    <header class="mb-10">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-bold tracking-tight text-slate-800">Projects</h1>
+          <p class="mt-1 text-slate-500">Create projects and assign members. Open a project to manage its tasks.</p>
+        </div>
+        <app-profile-menu />
+      </div>
+    </header>
+
+    <div class="mb-6 flex flex-wrap gap-3">
+      <a
+        routerLink="/project/form"
+        class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      >
+        <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        New project
+      </a>
+    </div>
+
+    @if (projectService.error()) {
+      <p class="mb-4 text-sm text-red-600">{{ projectService.error() }}</p>
+    }
+    @if (projectService.loading()) {
+      <p class="mb-4 text-sm text-slate-500">Loading projects...</p>
+    }
+
+    <div class="mb-4">
+      <input
+        type="text"
+        placeholder="Search projects..."
+        class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        [value]="searchTerm()"
+        (input)="searchTerm.set($any($event.target).value)"
+      />
+    </div>
+
+    <ul class="space-y-2">
+      @for (project of filteredProjects(); track project.id) {
+        <li
+          class="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-slate-300"
+        >
+          <div class="min-w-0 flex-1">
+            <p class="font-medium text-slate-800">{{ project.title }}</p>
+            <p class="text-xs text-slate-500">{{ memberLabel(project) }}</p>
+          </div>
+          <a
+            [routerLink]="['/task/list', project.id]"
+            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            Tasks
+          </a>
+          <a
+            [routerLink]="['/project/form', project.id]"
+            class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-indigo-600"
+            aria-label="Edit project"
+          >
+            <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+          </a>
+          <button
+            type="button"
+            (click)="deleteProject(project.id, project.title)"
+            class="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+            aria-label="Delete project"
+          >
+            <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+          </button>
+        </li>
+      } @empty {
+        <li
+          class="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-slate-500"
+        >
+          No projects yet. Create one above.
+        </li>
+      }
+    </ul>
+  </div>
+</div>

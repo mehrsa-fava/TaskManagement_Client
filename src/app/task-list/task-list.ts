@@ -1,6 +1,6 @@
 import { Component, computed, signal, OnInit, HostListener } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '../services/task-service';
 import { TaskUserService } from '../services/task-user-service';
@@ -29,11 +29,14 @@ export type EditingField = 'title' | 'description' | 'status' | 'priority' | 'us
 export class TaskList implements OnInit {
   private readonly filterSignal = signal<TaskListFilter>('all');
 
+  readonly projectId = signal<number | null>(null);
+
   constructor(
     protected taskService: TaskService,
     protected taskUserService: TaskUserService,
     private readonly authService: AuthService,
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
   ) {}
 
   readonly filterTabs = FILTER_TABS;
@@ -44,13 +47,26 @@ export class TaskList implements OnInit {
     if (f === 'active') return tasks.filter((t) => t.status !== 'Done');
     if (f === 'completed') return tasks.filter((t) => t.status === 'Done');
 
-    console.log(111);
     return tasks;
   });
 
   ngOnInit(): void {
-    this.taskService.loadTasks().subscribe();
+    this.route.paramMap.subscribe((pm) => {
+      const raw = pm.get('projectId');
+      const n = raw ? parseInt(raw, 10) : NaN;
+      if (!Number.isNaN(n)) {
+        this.projectId.set(n);
+        this.taskService.loadTasksByProjectId(n).subscribe();
+      } else {
+        this.projectId.set(null);
+      }
+    });
     this.taskUserService.loadUsers().subscribe();
+  }
+
+  private reloadTasksForProject(): void {
+    const pid = this.projectId();
+    if (pid !== null) this.taskService.loadTasksByProjectId(pid).subscribe();
   }
 
   logout(): void {
@@ -77,7 +93,7 @@ export class TaskList implements OnInit {
   }
 
   clearCompleted(): void {
-    this.taskService.clearCompleted().subscribe();
+    this.taskService.clearCompleted().subscribe(() => this.reloadTasksForProject());
   }
 
   // ─── Inline Editing State ───
@@ -194,7 +210,7 @@ export class TaskList implements OnInit {
 
     this.taskService.updateTask(taskId, { userIds: nextUserIds }).subscribe(() => {
       this.cancelEdit();
-      this.taskService.loadTasks().subscribe();
+      this.reloadTasksForProject();
     });
   }
 

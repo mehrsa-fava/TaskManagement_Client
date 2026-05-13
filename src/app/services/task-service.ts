@@ -53,6 +53,32 @@ export class TaskService {
     );
   }
 
+  /** Loads tasks for a single project (backend: GetAllTasksByProjectId). */
+  loadTasksByProjectId(projectId: number): Observable<Task[]> {
+    this.loadingSignal.set(true);
+    this.errorSignal.set(null);
+    return this.http
+      .get<TaskApiResponse[] | TaskApiResponse>(`${TASK_BASE}/GetAllTasksByProjectId`, {
+        params: { projectId },
+      })
+      .pipe(
+        tap(() => this.loadingSignal.set(false)),
+        catchError((err) => {
+          this.loadingSignal.set(false);
+          this.errorSignal.set(getApiErrorMessage(err, 'Failed to load tasks'));
+          return of([]);
+        }),
+        map((body) => {
+          const list = Array.isArray(body) ? body : body ? [body as TaskApiResponse] : [];
+          return list.map(apiToTask);
+        }),
+        tap((tasks) => {
+          this.tasksSignal.set(tasks);
+          this.errorSignal.set(null);
+        }),
+      );
+  }
+
   getTask(id: string): Task | undefined {
     return this.tasksSignal().find((t) => t.id === id);
   }
@@ -68,10 +94,13 @@ export class TaskService {
       );
   }
 
-  addTask(input: AddTaskInput | string): Observable<Task | null> {
-    const params: AddTaskInput = typeof input === 'string' ? { title: input } : input;
+  addTask(input: AddTaskInput): Observable<Task | null> {
+    const params = input;
     const title = (params.title ?? '').trim();
     if (!title) throw new Error('Task title is required');
+    if (params.projectId === undefined || Number.isNaN(Number(params.projectId))) {
+      throw new Error('Task projectId is required');
+    }
 
     const dto: CreateTaskDto = toCreateDto(params, title);
     return this.http.post<TaskApiResponse>(`${TASK_BASE}/CreateNewTask`, dto).pipe(
@@ -105,6 +134,7 @@ export class TaskService {
                   }),
                   ...(input.priority !== undefined && { priority: input.priority }),
                   ...(input.status !== undefined && { status: input.status }),
+                  ...(input.projectId !== undefined && { projectId: input.projectId }),
                   updatedAt: now,
                 }
               : t,

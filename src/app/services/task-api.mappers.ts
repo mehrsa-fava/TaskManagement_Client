@@ -1,4 +1,4 @@
-import type { Task, TaskStatus, TaskPriority } from '../model/task';
+import type { Task, TaskStatus, TaskPriority, TaskUser } from '../model/task';
 import type { AddTaskInput, UpdateTaskInput } from '../model/task';
 import type { TaskApiResponse, CreateTaskDto, UpdateTaskDto } from '../model/task-api';
 import { TaskStatusApi, TaskPriorityApi } from '../model/task-api';
@@ -93,6 +93,9 @@ export function apiToTask(api: TaskApiResponse): Task {
   const priority = api.Priority ?? raw['priority'];
   const description = api.Description ?? raw['description'];
   const users = api.Users ?? raw['Users'] ?? raw['users'];
+  const projectIdRaw = api.ProjectId ?? raw['projectId'];
+  const projectId =
+    projectIdRaw === undefined || projectIdRaw === null ? undefined : Number(projectIdRaw);
   const createdAt = api.CreatedAt ?? raw['createdAt'];
   const updatedAt = api.UpdatedAt ?? raw['updatedAt'];
   return {
@@ -101,10 +104,24 @@ export function apiToTask(api: TaskApiResponse): Task {
     status: statusFromApi(Number(status)),
     description: (description ?? '') as string,
     priority: priorityFromApi(Number(priority)),
-    users: users,
+    users: Array.isArray(users)
+      ? normalizeUsers(users as unknown as Record<string, unknown>[])
+      : [],
+    ...(projectId !== undefined && !Number.isNaN(projectId) ? { projectId } : {}),
     createdAt: createdAt ? new Date(createdAt as string).getTime() : now,
     updatedAt: updatedAt ? new Date(updatedAt as string).getTime() : now,
   };
+}
+
+function normalizeUsers(rows: Record<string, unknown>[]): TaskUser[] {
+  return rows.map((row) => {
+    const id = row['id'] ?? row['Id'];
+    const fullName = row['fullName'] ?? row['FullName'];
+    return {
+      id: String(id ?? ''),
+      fullName: String(fullName ?? 'Unknown User'),
+    };
+  });
 }
 
 export function toCreateDto(params: AddTaskInput, title: string): CreateTaskDto {
@@ -113,21 +130,26 @@ export function toCreateDto(params: AddTaskInput, title: string): CreateTaskDto 
     Description: params.description ?? '',
     Priority: priorityToApi(params.priority ?? 'Medium'),
     Status: statusToApi(params.status ?? 'Open'),
-    UserIds: params.userIds ?? [],
+    ProjectId: params.projectId,
+    UserIds: (params.userIds ?? []).filter((uid) => uid?.trim()),
   };
 }
 
 export function toUpdateDto(
   id: number,
   input: UpdateTaskInput,
-  existing: Pick<Task, 'title' | 'description' | 'priority' | 'status' | 'users'> | undefined,
+  existing:
+    | Pick<Task, 'title' | 'description' | 'priority' | 'status' | 'users' | 'projectId'>
+    | undefined,
 ): UpdateTaskDto {
+  const rawUserIds = input.userIds ?? (existing?.users ?? []).map((u) => u.id);
   return {
     Id: id,
     Title: (input.title ?? existing?.title ?? '').trim(),
     Description: input.description ?? existing?.description ?? '',
     Priority: priorityToApi(input.priority ?? existing?.priority ?? 'Medium'),
     Status: statusToApi(input.status ?? existing?.status ?? 'Open'),
-    UserIds: input.userIds ?? (existing?.users ?? []).map((u) => u.id),
+    ProjectId: input.projectId ?? existing?.projectId ?? 0,
+    UserIds: rawUserIds.filter((uid) => uid?.trim()),
   };
 }

@@ -3,6 +3,7 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { TaskService } from '../services/task-service';
 import { TaskUserService } from '../services/task-user-service';
+import { ProjectService } from '../services/project-service';
 import { ProfileMenu } from '../profile-menu/profile-menu';
 import { CommonModule } from '@angular/common';
 
@@ -41,6 +42,7 @@ export class TaskForm implements OnInit {
 
   constructor(
     private taskService: TaskService,
+    readonly projectService: ProjectService,
     private router: Router,
     private route: ActivatedRoute,
   ) {}
@@ -48,10 +50,18 @@ export class TaskForm implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.taskUserService.loadUsers().subscribe();
+    this.projectService.loadProjects().subscribe();
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
+      this.taskForm.get('projectId')?.disable({ emitEvent: false });
       this.loadTask(id);
+    } else {
+      const qp = this.route.snapshot.queryParamMap.get('projectId');
+      const n = qp ? parseInt(qp, 10) : NaN;
+      if (!Number.isNaN(n)) {
+        this.taskForm.patchValue({ projectId: n });
+      }
     }
   }
 
@@ -79,6 +89,7 @@ export class TaskForm implements OnInit {
       priority: new FormControl<TaskPriority>('Medium', { nonNullable: true }),
       //category: new FormControl('', { nonNullable: true }),
       status: new FormControl<TaskStatus>('Open', { nonNullable: true }),
+      projectId: new FormControl<number | null>(null, Validators.required),
     });
   }
 
@@ -104,10 +115,13 @@ export class TaskForm implements OnInit {
       priority: task.priority,
       //category: task.category ?? '',
       status: task.status,
+      projectId: task.projectId ?? null,
       //dueDateInput: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : '',
     });
 
-    const userIds = task.users?.map((u) => u.id) ?? [];
+    this.taskForm.get('projectId')?.disable({ emitEvent: false });
+
+    const userIds = task.users?.map((u) => u.id).filter((uid) => uid?.trim()) ?? [];
 
     this.selectedUserIds.set(new Set(userIds));
   }
@@ -120,7 +134,9 @@ export class TaskForm implements OnInit {
       priority: 'Medium',
       //category: '',
       status: 'Open',
+      projectId: null,
     });
+    this.taskForm.get('projectId')?.enable({ emitEvent: false });
     this.selectedUserIds.set(new Set());
   }
 
@@ -136,21 +152,27 @@ export class TaskForm implements OnInit {
     this.submitting = true;
 
     const formValue = this.taskForm.getRawValue();
+    const projectId = Number(formValue.projectId);
+    if (Number.isNaN(projectId)) {
+      this.submitting = false;
+      this.error = 'Select a project for this task.';
+      return;
+    }
 
     const payload = {
       title: formValue.title.trim(),
       description: formValue.description.trim() || undefined,
       priority: formValue.priority,
       status: formValue.status,
-      //userIds: this.isEditMode() ? undefined : Array.from(this.selectedUserIds()),
-      userIds: Array.from(this.selectedUserIds()),
+      projectId,
+      userIds: Array.from(this.selectedUserIds()).filter((uid) => uid?.trim()),
     };
 
     if (this.taskId) {
       this.taskService.updateTask(this.taskId, payload).subscribe({
         next: (ok) => {
           this.submitting = false;
-          if (ok) this.router.navigate(['/task/list']);
+          if (ok) this.router.navigate(['/task/list', projectId]);
           else this.error = 'Could not update task. Try again.';
         },
         error: () => {
@@ -164,7 +186,7 @@ export class TaskForm implements OnInit {
           this.submitting = false;
           if (task) {
             this.resetForm();
-            this.router.navigate(['/task/list']);
+            this.router.navigate(['/task/list', projectId]);
           } else {
             this.error = 'Could not add task. Try again.';
           }
@@ -197,8 +219,23 @@ export class TaskForm implements OnInit {
   filteredUsers = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
 
-    if (!term) return this.users();
+    const list = this.users().filter((u) => u.id?.trim());
 
-    return this.users().filter((u) => u.fullName.toLowerCase().includes(term));
+    if (!term) return list;
+
+    return list.filter((u) => u.fullName.toLowerCase().includes(term));
   });
+
+  projectLabel(): string {
+    const id = this.taskForm?.getRawValue()?.projectId as number | null | undefined;
+    if (id === null || id === undefined || Number.isNaN(Number(id))) return '—';
+    const p = this.projectService.projects().find((x) => x.id === id);
+    return p?.title ?? `#${id}`;
+  }
+
+  taskListBackLink(): string {
+    const id = this.taskForm.getRawValue().projectId as number | null;
+    if (id !== null && !Number.isNaN(Number(id))) return `/task/list/${id}`;
+    return '/project/list';
+  }
 }

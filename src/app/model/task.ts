@@ -28,6 +28,7 @@ export interface Task {
   createdAt: number;
   updatedAt: number;
   users: TaskUser[];
+  projectId?: number;
 }
 
 export type AddTaskInput = {
@@ -38,6 +39,7 @@ export type AddTaskInput = {
   //category?: string;
   status?: TaskStatus;
   userIds?: string[];
+  projectId: number;
 };
 
 export type UpdateTaskInput = {
@@ -48,6 +50,7 @@ export type UpdateTaskInput = {
   //category?: string;
   status?: TaskStatus;
   userIds?: string[];
+  projectId?: number;
 };
 
 /** Options for status and priority selects (shared by form and list). */

@@ -25,6 +25,7 @@ export interface CreateTaskDto {
   Description: string;
   Priority: number;
   Status: number;
+  ProjectId: number;
   UserIds: string[];
 }
 
@@ -34,6 +35,7 @@ export interface UpdateTaskDto {
   Description: string;
   Priority: number;
   Status: number;
+  ProjectId: number;
   UserIds: string[];
 }
 
@@ -49,6 +51,8 @@ export interface TaskApiResponse {
   Priority: number;
   Users: UserDto[];
   Status: number;
+  ProjectId?: number;
+  Tags?: unknown[];
   CreatedAt?: string;
   UpdatedAt?: string;
 }
