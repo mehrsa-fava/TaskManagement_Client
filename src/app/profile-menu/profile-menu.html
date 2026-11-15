@@ -20,6 +20,9 @@
         <div class="user-info">
           <p class="user-name">{{ currentUser()?.userName }}</p>
           <p class="user-email">{{ currentUser()?.email }}</p>
+          @if (roleLabel()) {
+            <p class="user-role">{{ roleLabel() }}</p>
+          }
         </div>
       </div>
       <div class="dropdown-actions">

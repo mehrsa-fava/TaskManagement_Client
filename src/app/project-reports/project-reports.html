@@ -1,0 +1,276 @@
+<div class="reports">
+  @if (error()) {
+    <p class="mb-4 text-sm text-red-600">{{ error() }}</p>
+  }
+  @if (loading()) {
+    <p class="mb-4 text-sm text-slate-500">Loading reports...</p>
+  }
+
+  <section class="report-card">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2>Workload by Status</h2>
+        <p class="subtitle">Task counts across the project</p>
+      </div>
+      <div class="stat-pills">
+        <span>Total {{ report()?.totalTasks ?? tasks().length }}</span>
+        <span>Active {{ report()?.activeCount ?? 0 }}</span>
+        <span>Finished {{ report()?.finishedCount ?? 0 }}</span>
+      </div>
+    </div>
+    <div class="bar-chart" role="img" aria-label="Workload by status">
+      @for (bar of workloadBars(); track bar.status) {
+        <div class="bar-col">
+          <div class="bar-track">
+            <div class="bar-fill" [style.height.%]="bar.height" [style.background]="bar.color">
+              @if (bar.count) {
+                <span>{{ bar.count }}</span>
+              }
+            </div>
+          </div>
+          <span class="bar-label">{{ bar.label }}</span>
+        </div>
+      }
+    </div>
+  </section>
+
+  <div class="grid gap-4 xl:grid-cols-2">
+    <section class="report-card">
+      <h2>Workload by Status</h2>
+      <div class="pie-wrap">
+        <svg viewBox="0 0 180 140" class="pie">
+          @for (slice of workloadPie().slices; track slice.label) {
+            <path [attr.d]="slice.path" [attr.fill]="slice.color"></path>
+          }
+        </svg>
+        <ul class="legend">
+          @for (slice of workloadPie().slices; track slice.label) {
+            <li>
+              <span class="swatch" [style.background]="slice.color"></span>
+              {{ slice.label }} {{ slice.percent | number: '1.0-1' }}%
+            </li>
+          } @empty {
+            <li class="text-slate-400">No tasks yet.</li>
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class="report-card">
+      <h2>Tasks by Assignee</h2>
+      <div class="pie-wrap">
+        <svg viewBox="0 0 180 140" class="pie">
+          @for (slice of assigneePie().slices; track slice.label) {
+            <path [attr.d]="slice.path" [attr.fill]="slice.color"></path>
+          }
+        </svg>
+        <ul class="legend">
+          @for (slice of assigneePie().slices; track slice.label) {
+            <li>
+              <span class="swatch" [style.background]="slice.color"></span>
+              {{ slice.label }} {{ slice.percent | number: '1.0-1' }}%
+            </li>
+          } @empty {
+            <li class="text-slate-400">No assignments yet.</li>
+          }
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <section class="report-card">
+    <h2>Current Sprint Task Status</h2>
+    <p class="subtitle">Distribution of tasks by their current status</p>
+    <div class="pie-wrap">
+      <svg viewBox="0 0 180 140" class="pie">
+        @for (slice of sprintStatusDonut().slices; track slice.label) {
+          <path [attr.d]="slice.path" [attr.fill]="slice.color"></path>
+        }
+      </svg>
+      <ul class="legend">
+        @for (slice of sprintStatusDonut().slices; track slice.label) {
+          <li>
+            <span class="swatch" [style.background]="slice.color"></span>
+            {{ slice.label }}
+          </li>
+        } @empty {
+          <li class="text-slate-400">No sprint tasks yet.</li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="report-card">
+    <h2>Sprint Estimate vs Actual</h2>
+    <p class="subtitle">Compare planned effort with the time actually tracked in each sprint</p>
+    @if (estimateVsActual().length === 0) {
+      <p class="empty">No sprints to compare yet.</p>
+    } @else {
+      <div class="grouped-bars">
+        @for (group of estimateVsActual(); track group.label) {
+          <div class="grouped-col">
+            <div class="grouped-pair">
+              @for (item of group.values; track item.label) {
+                <div
+                  class="grouped-fill"
+                  [style.height.%]="barHeight(item.value, estimateMax())"
+                  [style.background]="item.color"
+                  [title]="item.label + ': ' + item.value + 'h'"
+                ></div>
+              }
+            </div>
+            <span class="bar-label">{{ group.label }}</span>
+          </div>
+        }
+      </div>
+      <div class="legend legend-row">
+        <span><i class="swatch" style="background: #1d4ed8"></i> Estimated hours</span>
+        <span><i class="swatch" style="background: #15803d"></i> Tracked hours</span>
+      </div>
+    }
+    <p class="hint">Does the team usually spend more or less time than the estimate?</p>
+  </section>
+
+  <section class="report-card">
+    <h2>Estimation Accuracy</h2>
+    <p class="subtitle">Tracked time / estimated time × 100</p>
+    <div class="accuracy-list">
+      @for (row of accuracyRows(); track row.label) {
+        <div class="accuracy-row">
+          <span>{{ row.label }}</span>
+          <strong>{{ row.accuracy == null ? '—' : row.accuracy + '%' }}</strong>
+        </div>
+      } @empty {
+        <p class="empty">Add estimates and tracked hours to see accuracy.</p>
+      }
+    </div>
+    <p class="hint">Over 100% means the team is spending more time than estimated.</p>
+  </section>
+
+  <section class="report-card">
+    <h2>Sprint Velocity</h2>
+    <div class="summary-grid">
+      <div>
+        <p class="kicker">Velocity</p>
+        <p class="metric">{{ velocitySummary().velocity }} pts / sprint</p>
+      </div>
+      <div>
+        <p class="kicker">Avg. forecast</p>
+        <p class="metric">{{ velocitySummary().forecast }} pts</p>
+      </div>
+      <div>
+        <p class="kicker">Sprints</p>
+        <p class="metric">{{ velocitySummary().sprints }}</p>
+      </div>
+    </div>
+    <svg viewBox="0 0 320 180" class="line-chart">
+      @for (series of velocityChart().series; track series.color) {
+        <polyline
+          fill="none"
+          [attr.stroke]="series.color"
+          stroke-width="2.5"
+          [attr.points]="series.points"
+        />
+        @for (dot of series.dots; track $index) {
+          <circle [attr.cx]="dot.x" [attr.cy]="dot.y" r="3.2" [attr.fill]="series.color"></circle>
+        }
+      }
+    </svg>
+  </section>
+
+  @if (burnCharts().summary; as summary) {
+    <div class="grid gap-4 xl:grid-cols-2">
+      <section class="report-card">
+        <h2>Sprint Burnup</h2>
+        <div class="summary-grid">
+          <div>
+            <p class="kicker">Total effort</p>
+            <p class="metric">{{ summary.total }} pts</p>
+          </div>
+          <div>
+            <p class="kicker">Started</p>
+            <p class="metric">{{ summary.started }} pts · {{ summary.startedPct }}%</p>
+          </div>
+          <div>
+            <p class="kicker">Completed</p>
+            <p class="metric">{{ summary.completed }} pts · {{ summary.completedPct }}%</p>
+          </div>
+        </div>
+        <svg viewBox="0 0 320 180" class="line-chart">
+          @for (series of burnCharts().burnup?.series ?? []; track $index) {
+            <polyline
+              fill="none"
+              [attr.stroke]="series.color"
+              stroke-width="2.5"
+              [attr.stroke-dasharray]="series.dashed ? '5 4' : null"
+              [attr.points]="series.points"
+            />
+          }
+        </svg>
+      </section>
+      <section class="report-card">
+        <h2>Sprint Burndown</h2>
+        <div class="summary-grid">
+          <div>
+            <p class="kicker">Total effort</p>
+            <p class="metric">{{ summary.total }} pts</p>
+          </div>
+          <div>
+            <p class="kicker">Started</p>
+            <p class="metric">{{ summary.started }} pts · {{ summary.startedPct }}%</p>
+          </div>
+          <div>
+            <p class="kicker">Completed</p>
+            <p class="metric">{{ summary.completed }} pts · {{ summary.completedPct }}%</p>
+          </div>
+        </div>
+        <svg viewBox="0 0 320 180" class="line-chart">
+          @for (series of burnCharts().burndown?.series ?? []; track $index) {
+            <polyline
+              fill="none"
+              [attr.stroke]="series.color"
+              stroke-width="2.5"
+              [attr.stroke-dasharray]="series.dashed ? '5 4' : null"
+              [attr.points]="series.points"
+            />
+          }
+        </svg>
+      </section>
+    </div>
+  }
+
+  <section class="report-card">
+    <h2>Time Reporting</h2>
+    <div class="time-table">
+      <div class="time-head">
+        <span>Name</span>
+        <span>Time estimated</span>
+        <span>Time tracked</span>
+      </div>
+      @for (row of timeRows(); track row.userId + row.name) {
+        <div class="time-row">
+          <span class="name-cell">
+            <span
+              class="inline-flex size-7 items-center justify-center rounded-full text-xs font-semibold text-white"
+              [class]="getAvatarColor(row.userId)"
+            >
+              {{ getInitial(row.name) }}
+            </span>
+            {{ row.name }}
+          </span>
+          <span>{{ formatHours(row.estimated) || '—' }}</span>
+          <span>{{ formatHours(row.tracked) || '—' }}</span>
+        </div>
+        @for (task of row.tasks; track task.id) {
+          <div class="time-task">
+            <span>{{ task.title }}</span>
+            <span>{{ formatHours(task.timeEstimate) || '—' }}</span>
+            <span>{{ formatHours(task.timeTracked) || '—' }}</span>
+          </div>
+        }
+      } @empty {
+        <p class="empty">No tracked time yet.</p>
+      }
+    </div>
+  </section>
+</div>

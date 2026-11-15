@@ -3,6 +3,7 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { SprintService } from '../services/sprint-service';
 import { ProjectService } from '../services/project-service';
+import { AuthService } from '../services/auth-service';
 import { PersianDateInputComponent } from '../persian-date-input/persian-date-input';
 import { getNextSprintName } from '../utils/sprint.util';
 
@@ -27,9 +28,20 @@ export class SprintForm implements OnInit {
     readonly projectService: ProjectService,
     private readonly router: Router,
     private readonly route: ActivatedRoute,
+    private readonly authService: AuthService,
   ) {}
 
   ngOnInit(): void {
+    if (!this.authService.canManageWorkspace()) {
+      const existing = this.projectService.projects();
+      if (existing.length > 0) {
+        this.router.navigate(['/project', existing[0].id, 'backlog']);
+      } else {
+        this.router.navigate(['/project/list']);
+      }
+      return;
+    }
+
     this.initForm();
     this.projectService.loadProjects().subscribe();
 
@@ -67,6 +79,7 @@ export class SprintForm implements OnInit {
       title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       startDate: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       endDate: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+      goal: new FormControl('', { nonNullable: true }),
     });
   }
 
@@ -91,6 +104,7 @@ export class SprintForm implements OnInit {
         title: sprint.title,
         startDate: sprint.startDate,
         endDate: sprint.endDate,
+        goal: sprint.goal,
       });
     });
   }
@@ -113,11 +127,11 @@ export class SprintForm implements OnInit {
     if (this.submitting) return;
     this.submitting = true;
 
-    const { title, startDate, endDate } = this.sprintForm.getRawValue();
+    const { title, startDate, endDate, goal } = this.sprintForm.getRawValue();
 
     if (this.sprintNumericId !== null) {
       this.sprintService
-        .updateSprint({ id: this.sprintNumericId, title, startDate, endDate })
+        .updateSprint({ id: this.sprintNumericId, title, startDate, endDate, goal })
         .subscribe({
           next: (ok) => {
             this.submitting = false;
@@ -141,6 +155,7 @@ export class SprintForm implements OnInit {
           title,
           startDate,
           endDate,
+          goal,
           projectId: this.projectNumericId,
         })
         .subscribe({

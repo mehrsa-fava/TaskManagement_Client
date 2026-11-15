@@ -1,0 +1,169 @@
+.task-detail {
+  display: grid;
+  min-height: 100%;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.task-detail--create {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.task-detail-main {
+  padding: 1.5rem 1.75rem 2.5rem;
+}
+
+.activity-pane {
+  border-left: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 1.25rem;
+}
+
+.activity-pane h2 {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+}
+
+.back-link,
+.link-action {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: #6366f1;
+}
+
+.title-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 1.7rem;
+  font-weight: 700;
+  outline: none;
+}
+
+.field-label,
+.meta-row span {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.field {
+  width: 100%;
+  border: 1px solid #dbe3ee;
+  border-radius: 0.7rem;
+  background: #fff;
+  padding: 0.55rem 0.75rem;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.85rem;
+}
+
+.chip,
+.user-row,
+.related-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chip,
+.tag-chip {
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.75rem;
+}
+
+.avatar {
+  display: inline-flex;
+  width: 1.5rem;
+  height: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.user-list,
+.related-list,
+.related-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.8rem;
+  background: #fff;
+}
+
+.user-row,
+.related-item {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+}
+
+.user-row.selected,
+.related-item:hover,
+.user-row:hover {
+  background: #eef2ff;
+}
+
+.status-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+}
+
+.btn-primary {
+  border-radius: 0.7rem;
+  background: #4f46e5;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.btn-secondary {
+  border-radius: 0.7rem;
+  border: 1px solid #dbe3ee;
+  background: #fff;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+}
+
+.activity-list span {
+  color: #94a3b8;
+  font-size: 0.72rem;
+}
+
+.comment-box textarea {
+  width: 100%;
+  border: 1px solid #dbe3ee;
+  border-radius: 0.7rem;
+  padding: 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .task-detail {
+    grid-template-columns: 1fr;
+  }
+  .activity-pane {
+    border-left: 0;
+    border-top: 1px solid #e2e8f0;
+  }
+}

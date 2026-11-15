@@ -42,6 +42,10 @@ export class ProfileMenu {
     return name.charAt(0).toUpperCase();
   }
 
+  roleLabel(): string {
+    return (this.currentUser()?.roles ?? []).join(', ');
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;

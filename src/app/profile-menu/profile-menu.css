@@ -94,6 +94,16 @@
   text-overflow: ellipsis;
 }
 
+.user-role {
+  margin: 0.125rem 0 0;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #4f46e5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .dropdown-actions {
   padding-top: 0.75rem;
 }

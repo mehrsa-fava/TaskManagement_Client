@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { AuthService } from './auth-service';
 import type {
   CreateSprintApiResponse,
   CreateSprintInput,
@@ -22,6 +23,7 @@ function normalizeSprint(raw: Record<string, unknown>, projectId?: number): Spri
   const title = raw['title'] ?? raw['Title'];
   const startDate = raw['startDate'] ?? raw['StartDate'];
   const endDate = raw['endDate'] ?? raw['EndDate'];
+  const goal = raw['goal'] ?? raw['Goal'];
   const tasks = raw['tasks'] ?? raw['Tasks'];
   const pid = projectId ?? raw['projectId'] ?? raw['ProjectId'];
   return {
@@ -30,6 +32,7 @@ function normalizeSprint(raw: Record<string, unknown>, projectId?: number): Spri
     projectId: Number(pid ?? 0),
     startDate: toDateInputValue(startDate),
     endDate: toDateInputValue(endDate),
+    goal: String(goal ?? '').trim(),
     ...(Array.isArray(tasks) ? { tasks } : {}),
   };
 }
@@ -42,7 +45,10 @@ export class SprintService {
   private readonly loadingProjectsSignal = signal<Set<number>>(new Set());
   private readonly errorSignal = signal<string | null>(null);
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly authService: AuthService,
+  ) {}
 
   readonly sprintsByProject = this.sprintsByProjectSignal.asReadonly();
   readonly loadingProjects = this.loadingProjectsSignal.asReadonly();
@@ -99,10 +105,19 @@ export class SprintService {
   }
 
   createSprint(input: CreateSprintInput): Observable<CreateSprintApiResponse | null> {
+    if (this.authService.isEmployee()) {
+      return of({
+        id: 0,
+        success: false,
+        message: 'Employees are not permitted to create sprints.',
+        errors: ['Employees are not permitted to create sprints.'],
+      });
+    }
     const body = {
       title: input.title.trim(),
       startDate: input.startDate,
       endDate: input.endDate,
+      goal: input.goal.trim(),
       projectId: input.projectId,
     };
     return this.http.post<CreateSprintApiResponse>(`${SPRINT_BASE}/CreateNewSprint`, body).pipe(
@@ -113,6 +128,7 @@ export class SprintService {
             title: body.title,
             startDate: body.startDate,
             endDate: body.endDate,
+            goal: body.goal,
             projectId: body.projectId,
           });
         }
@@ -122,11 +138,15 @@ export class SprintService {
   }
 
   updateSprint(input: UpdateSprintInput): Observable<boolean> {
+    if (this.authService.isEmployee()) {
+      return of(false);
+    }
     const body = {
       id: input.id,
       title: input.title.trim(),
       startDate: input.startDate,
       endDate: input.endDate,
+      goal: input.goal.trim(),
     };
     return this.http.put<unknown>(`${SPRINT_BASE}/UpdateSprintById`, body).pipe(
       tap(() => {
@@ -136,7 +156,13 @@ export class SprintService {
             const pid = Number(projectId);
             next[pid] = next[pid].map((s) =>
               s.id === input.id
-                ? { ...s, title: body.title, startDate: body.startDate, endDate: body.endDate }
+                ? {
+                    ...s,
+                    title: body.title,
+                    startDate: body.startDate,
+                    endDate: body.endDate,
+                    goal: body.goal,
+                  }
                 : s,
             );
           }
@@ -149,6 +175,9 @@ export class SprintService {
   }
 
   deleteSprint(id: number, projectId: number): Observable<boolean> {
+    if (this.authService.isEmployee()) {
+      return of(false);
+    }
     return this.http.delete<unknown>(`${SPRINT_BASE}/DeleteSprintById`, { params: { id } }).pipe(
       tap(() => {
         this.sprintsByProjectSignal.update((map) => ({

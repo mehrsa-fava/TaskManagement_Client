@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { AuthService } from './auth-service';
 import type {
   CreateProjectApiResponse,
   CreateProjectInput,
@@ -31,7 +32,10 @@ export class ProjectService {
   private readonly loadingSignal = signal(false);
   private readonly errorSignal = signal<string | null>(null);
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly authService: AuthService,
+  ) {}
 
   readonly projects = this.projectsSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
@@ -63,6 +67,14 @@ export class ProjectService {
   }
 
   createProject(input: CreateProjectInput): Observable<CreateProjectApiResponse | null> {
+    if (this.authService.isEmployee()) {
+      return of({
+        id: 0,
+        success: false,
+        message: 'Employees are not permitted to create projects.',
+        errors: ['Employees are not permitted to create projects.'],
+      });
+    }
     const body = { title: input.title.trim(), userIds: input.userIds };
     return this.http.post<CreateProjectApiResponse>(`${PROJECT_BASE}/CreateNewProject`, body).pipe(
       tap((res) => {
@@ -75,6 +87,9 @@ export class ProjectService {
   }
 
   updateProject(input: UpdateProjectInput): Observable<boolean> {
+    if (this.authService.isEmployee()) {
+      return of(false);
+    }
     const body = { id: input.id, title: input.title.trim(), userIds: input.userIds };
     return this.http.put<unknown>(`${PROJECT_BASE}/UpdateProjectById`, body).pipe(
       tap(() =>
@@ -90,6 +105,9 @@ export class ProjectService {
   }
 
   deleteProject(id: number): Observable<boolean> {
+    if (this.authService.isEmployee()) {
+      return of(false);
+    }
     return this.http.delete<unknown>(`${PROJECT_BASE}/DeleteProjectById`, { params: { id } }).pipe(
       tap(() => this.projectsSignal.update((list) => list.filter((p) => p.id !== id))),
       map(() => true),

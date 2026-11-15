@@ -2,16 +2,18 @@
   <div class="sidebar-header">
     <h2 class="sidebar-title">Projects</h2>
     <div class="sidebar-header-actions">
-      <a routerLink="/project/form" class="icon-btn" title="New project" aria-label="New project">
-        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-      </a>
+      @if (canManageWorkspace()) {
+        <a routerLink="/project/form" class="icon-btn" title="New project" aria-label="New project">
+          <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+        </a>
+      }
       <app-profile-menu />
     </div>
   </div>
@@ -44,7 +46,7 @@
             </svg>
           </button>
 
-          @if (hoveredProjectId() === project.id) {
+          @if (canManageWorkspace() && hoveredProjectId() === project.id) {
             <div class="project-actions">
               <a
                 [routerLink]="['/project/form', project.id]"
@@ -99,8 +101,30 @@
           <div class="tree-children">
             <a
               [routerLink]="['/project', project.id, 'backlog']"
-              routerLinkActive="tree-item--active"
+              [queryParams]="{ view: 'reports' }"
               class="tree-item"
+              [class.tree-item--active]="isReportsActive(project.id)"
+            >
+              <svg
+                class="folder-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  d="M4 19V5m4 14V9m4 10v-6m4 6V7m4 12V4"
+                />
+              </svg>
+              <span>Reports</span>
+            </a>
+            <a
+              [routerLink]="['/project', project.id, 'backlog']"
+              [queryParams]="{ view: 'list' }"
+              class="tree-item"
+              [class.tree-item--active]="isBacklogActive(project.id)"
             >
               <svg
                 class="folder-icon folder-icon--backlog"
@@ -160,22 +184,24 @@
                     />
                   </svg>
                 </button>
-                <a
-                  [routerLink]="['/sprint/form']"
-                  [queryParams]="{ projectId: project.id }"
-                  class="icon-btn icon-btn--ghost sprint-add-btn"
-                  title="New sprint"
-                  (click)="$event.stopPropagation()"
-                >
-                  <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                </a>
+                @if (canManageWorkspace()) {
+                  <a
+                    [routerLink]="['/sprint/form']"
+                    [queryParams]="{ projectId: project.id }"
+                    class="icon-btn icon-btn--ghost sprint-add-btn"
+                    title="New sprint"
+                    (click)="$event.stopPropagation()"
+                  >
+                    <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                  </a>
+                }
               </div>
 
               @if (isSprintsFolderExpanded(project.id)) {
@@ -183,27 +209,31 @@
                   @if (sprintService.isLoading(project.id)) {
                     <p class="sidebar-status sidebar-status--nested">Loading sprints...</p>
                   } @else if (sprintsFor(project.id).length === 0) {
-                    <a
-                      [routerLink]="['/sprint/form']"
-                      [queryParams]="{ projectId: project.id }"
-                      class="create-sprint-btn create-sprint-btn--solo"
-                    >
-                      <svg
-                        class="size-3.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
+                    @if (canManageWorkspace()) {
+                      <a
+                        [routerLink]="['/sprint/form']"
+                        [queryParams]="{ projectId: project.id }"
+                        class="create-sprint-btn create-sprint-btn--solo"
                       >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
-                      Create Sprint
-                    </a>
+                        <svg
+                          class="size-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        Create Sprint
+                      </a>
+                    } @else {
+                      <p class="sidebar-status sidebar-status--nested">No sprints yet.</p>
+                    }
                   } @else {
                     @for (sprint of sprintsFor(project.id); track sprint.id) {
                       @let status = sprintStatus(sprint);
@@ -243,7 +273,10 @@
                             </span>
                           }
                         </a>
-                        @if (hoveredSprintKey() === sprintRowKey(project.id, sprint.id)) {
+                        @if (
+                          canManageWorkspace() &&
+                          hoveredSprintKey() === sprintRowKey(project.id, sprint.id)
+                        ) {
                           <div class="sprint-actions">
                             <a
                               [routerLink]="['/sprint/form', sprint.id]"
@@ -289,27 +322,29 @@
                         }
                       </div>
                     }
-                    <a
-                      [routerLink]="['/sprint/form']"
-                      [queryParams]="{ projectId: project.id }"
-                      class="create-sprint-btn"
-                    >
-                      <svg
-                        class="size-3.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
+                    @if (canManageWorkspace()) {
+                      <a
+                        [routerLink]="['/sprint/form']"
+                        [queryParams]="{ projectId: project.id }"
+                        class="create-sprint-btn"
                       >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
-                      Create Sprint
-                    </a>
+                        <svg
+                          class="size-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        Create Sprint
+                      </a>
+                    }
                   }
                 </div>
               }

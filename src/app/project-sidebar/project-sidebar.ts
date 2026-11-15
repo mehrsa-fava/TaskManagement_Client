@@ -5,6 +5,7 @@ import { filter } from 'rxjs';
 import { ProjectService } from '../services/project-service';
 import { SprintService } from '../services/sprint-service';
 import { TaskService } from '../services/task-service';
+import { AuthService } from '../services/auth-service';
 import { ProfileMenu } from '../profile-menu/profile-menu';
 import { getProjectIconStyle } from '../utils/project-icon.util';
 import {
@@ -30,12 +31,17 @@ export class ProjectSidebar implements OnInit {
   readonly hoveredProjectId = signal<number | null>(null);
   readonly hoveredSprintKey = signal<string | null>(null);
 
+  readonly canManageWorkspace;
+
   constructor(
     protected readonly projectService: ProjectService,
     protected readonly sprintService: SprintService,
     protected readonly taskService: TaskService,
+    private readonly authService: AuthService,
     private readonly router: Router,
-  ) {}
+  ) {
+    this.canManageWorkspace = this.authService.canManageWorkspace;
+  }
 
   ngOnInit(): void {
     this.projectService.loadProjects().subscribe((projects) => {
@@ -200,6 +206,17 @@ export class ProjectSidebar implements OnInit {
       return;
     }
     this.ensureProjectTasksLoaded(projectId);
+  }
+
+  isBacklogActive(projectId: number): boolean {
+    const url = this.router.url;
+    return url.includes(`/project/${projectId}/backlog`) && !url.includes('view=reports');
+  }
+
+  isReportsActive(projectId: number): boolean {
+    return (
+      this.router.url.includes(`/project/${projectId}/`) && this.router.url.includes('view=reports')
+    );
   }
 
   onProjectRowClick(project: Project): void {

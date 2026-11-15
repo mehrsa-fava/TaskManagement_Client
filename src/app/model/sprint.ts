@@ -4,6 +4,7 @@ export interface Sprint {
   projectId: number;
   startDate: string;
   endDate: string;
+  goal: string;
   tasks?: unknown[];
 }
 
@@ -11,6 +12,7 @@ export interface CreateSprintInput {
   title: string;
   startDate: string;
   endDate: string;
+  goal: string;
   projectId: number;
 }
 
@@ -19,6 +21,7 @@ export interface UpdateSprintInput {
   title: string;
   startDate: string;
   endDate: string;
+  goal: string;
 }
 
 export interface CreateSprintApiResponse {

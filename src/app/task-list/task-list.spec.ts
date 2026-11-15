@@ -17,8 +17,12 @@ describe('TaskList', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            snapshot: { paramMap: convertToParamMap({ projectId: '1' }) },
+            snapshot: {
+              paramMap: convertToParamMap({ projectId: '1' }),
+              queryParamMap: convertToParamMap({}),
+            },
             paramMap: of(convertToParamMap({ projectId: '1' })),
+            queryParamMap: of(convertToParamMap({})),
           },
         },
       ],

@@ -1,0 +1,108 @@
+<div class="board-wrap">
+  @if (error) {
+    <p class="mb-4 text-sm text-red-600">{{ error }}</p>
+  }
+  @if (loading) {
+    <p class="mb-4 text-sm text-slate-500">Loading board...</p>
+  }
+
+  <div class="board-scroller" role="list">
+    @for (column of columns; track trackColumn($index, column)) {
+      <section
+        class="board-column"
+        role="listitem"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop($event, column.status)"
+      >
+        <header class="board-column-header" [ngClass]="statusHeaderClass(column.status)">
+          <span class="inline-flex size-2 rounded-full" [ngClass]="statusDotClass(column.status)"></span>
+          <span class="uppercase tracking-wide">{{ statusLabel(column.status) }}</span>
+          <span class="board-count">{{ column.tasks.length }}</span>
+        </header>
+
+        <div class="board-cards">
+          @for (task of column.tasks; track task.id) {
+            <article
+              class="board-card"
+              draggable="true"
+              tabindex="0"
+              [attr.aria-label]="task.title + ', ' + statusLabel(task.status)"
+              (dragstart)="onDragStart($event, task)"
+              (click)="openTask.emit(task)"
+              (keydown)="onCardKeydown($event, task)"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <p class="board-card-title">{{ task.title }}</p>
+                <svg
+                  class="size-3.5 shrink-0"
+                  [class]="priorityColorClass(task.priority)"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  [attr.title]="priorityTitle(task.priority)"
+                >
+                  <path
+                    d="M5 3v18M5 3h10l-2 4 2 4H5"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
+
+              @if (task.tags.length) {
+                <div class="mt-2 flex flex-wrap gap-1">
+                  @for (tag of task.tags; track tag.id) {
+                    <span class="tag-chip" [ngClass]="tagColorClass(tag.tagColor)">{{ tag.tagName }}</span>
+                  }
+                </div>
+              }
+
+              <div class="mt-3 flex items-center justify-between gap-2">
+                <span class="text-xs text-slate-500">
+                  @if (task.dueDate) {
+                    {{ formatDue(task.dueDate) }}
+                  }
+                </span>
+                <div class="flex -space-x-1.5">
+                  @for (user of task.users; track user.id) {
+                    <span
+                      class="inline-flex size-6 items-center justify-center rounded-full text-[10px] font-semibold text-white ring-2 ring-white"
+                      [ngClass]="getAvatarColor(user.id)"
+                      [title]="user.fullName"
+                    >
+                      {{ getInitial(user.fullName) }}
+                    </span>
+                  }
+                </div>
+              </div>
+            </article>
+          } @empty {
+            <p class="px-1 py-6 text-center text-xs text-slate-400">No tasks</p>
+          }
+        </div>
+
+        @if (isAdding(column.status)) {
+          <form class="mt-2" (submit)="$event.preventDefault(); submitAdd(column.status)">
+            <input
+              class="w-full rounded-lg border border-indigo-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              [(ngModel)]="draftTitle"
+              name="new-task-{{ column.status }}"
+              placeholder="Task title"
+              autofocus
+            />
+            <div class="mt-2 flex gap-2">
+              <button type="submit" class="rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white">
+                Add
+              </button>
+              <button type="button" class="rounded-md px-2.5 py-1 text-xs text-slate-500" (click)="cancelAdd()">
+                Cancel
+              </button>
+            </div>
+          </form>
+        } @else {
+          <button type="button" class="add-task-btn" (click)="startAdd(column.status)">+ Add Task</button>
+        }
+      </section>
+    }
+  </div>
+</div>

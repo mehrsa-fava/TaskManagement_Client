@@ -1,6 +1,7 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { ProjectService } from '../services/project-service';
+import { AuthService } from '../services/auth-service';
 import { ProfileMenu } from '../profile-menu/profile-menu';
 
 @Component({
@@ -11,12 +12,26 @@ import { ProfileMenu } from '../profile-menu/profile-menu';
   styleUrl: './project-list.css',
 })
 export class ProjectList implements OnInit {
+  private readonly router = inject(Router);
+  protected readonly authService = inject(AuthService);
+  protected readonly projectService = inject(ProjectService);
+
+  readonly canManageWorkspace = this.authService.canManageWorkspace;
   readonly searchTerm = signal('');
 
-  constructor(protected readonly projectService: ProjectService) {}
-
   ngOnInit(): void {
-    this.projectService.loadProjects().subscribe();
+    if (this.authService.isEmployee()) {
+      const existing = this.projectService.projects();
+      if (existing.length > 0) {
+        this.router.navigate(['/project', existing[0].id, 'backlog']);
+        return;
+      }
+    }
+    this.projectService.loadProjects().subscribe((projects) => {
+      if (this.authService.isEmployee() && projects.length > 0) {
+        this.router.navigate(['/project', projects[0].id, 'backlog']);
+      }
+    });
   }
 
   filteredProjects = computed(() => {

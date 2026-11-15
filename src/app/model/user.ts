@@ -5,6 +5,7 @@ export interface User {
   token: string | null;
   refreshToken: string | null;
   refreshTokenExpiresAt: string | null;
+  roles: string[];
 }
 
 export interface LoginResponse {

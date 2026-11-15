@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
 import { CommonModule } from '@angular/common';
 import { ProjectService } from '../services/project-service';
 import { TaskUserService } from '../services/task-user-service';
+import { AuthService } from '../services/auth-service';
 
 @Component({
   selector: 'app-project-form',
@@ -22,6 +23,7 @@ export class ProjectForm implements OnInit {
   private projectNumericId: number | null = null;
 
   private readonly taskUserService = inject(TaskUserService);
+  private readonly authService = inject(AuthService);
   readonly users = this.taskUserService.users;
   readonly usersLoading = this.taskUserService.loading;
   readonly usersError = this.taskUserService.error;
@@ -34,6 +36,16 @@ export class ProjectForm implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (!this.authService.canManageWorkspace()) {
+      const existing = this.projectService.projects();
+      if (existing.length > 0) {
+        this.router.navigate(['/project', existing[0].id, 'backlog']);
+      } else {
+        this.router.navigate(['/project/list']);
+      }
+      return;
+    }
+
     this.initForm();
     this.taskUserService.loadUsers().subscribe();
 

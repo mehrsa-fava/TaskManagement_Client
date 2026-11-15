@@ -8,6 +8,7 @@ import { SprintForm } from './sprint-form/sprint-form';
 import { AppShell } from './layout/app-shell';
 import { WorkspaceHome } from './workspace-home/workspace-home';
 import { authGuard } from './guards/auth.guard';
+import { workspaceWriteGuard } from './guards/workspace-write.guard';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -30,18 +31,22 @@ export const routes: Routes = [
       {
         path: 'project/form',
         component: ProjectForm,
+        canActivate: [workspaceWriteGuard],
       },
       {
         path: 'project/form/:id',
         component: ProjectForm,
+        canActivate: [workspaceWriteGuard],
       },
       {
         path: 'sprint/form',
         component: SprintForm,
+        canActivate: [workspaceWriteGuard],
       },
       {
         path: 'sprint/form/:id',
         component: SprintForm,
+        canActivate: [workspaceWriteGuard],
       },
       {
         path: 'task/form',

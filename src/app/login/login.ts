@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
 import { UserService } from '../services/user-service';
 import { AuthService } from '../services/auth-service';
 import { getApiErrorMessage } from '../utils/api-error.util';
+import { ProjectService } from '../services/project-service';
 import type { User, LoginResponse } from '../model/user';
 
 @Component({
@@ -22,12 +23,14 @@ export class Login implements OnInit {
   constructor(
     private userService: UserService,
     private authService: AuthService,
+    private projectService: ProjectService,
     private router: Router,
   ) {}
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
-      this.router.navigate(['/task/list']);
+      this.navigateAfterLogin();
+      return;
     }
 
     this.loginForm = new FormGroup({
@@ -52,7 +55,7 @@ export class Login implements OnInit {
         if (response.statusCode === 200 && response.result) {
           this.authService.setUser(response.result);
           this.user = response.result;
-          this.router.navigate(['/task/list']);
+          this.navigateAfterLogin();
         } else {
           this.errorMessage = response.message || 'Login failed';
         }
@@ -61,5 +64,25 @@ export class Login implements OnInit {
         this.errorMessage = getApiErrorMessage(err, 'There was an error. Please try again.');
       },
     });
+  }
+
+  private navigateAfterLogin(): void {
+    if (this.authService.isEmployee()) {
+      const existing = this.projectService.projects();
+      if (existing.length > 0) {
+        this.router.navigate(['/project', existing[0].id, 'backlog']);
+        return;
+      }
+      this.projectService.loadProjects().subscribe((projects) => {
+        if (projects.length > 0) {
+          this.router.navigate(['/project', projects[0].id, 'backlog']);
+        } else {
+          this.router.navigate(['/project/list']);
+        }
+      });
+      return;
+    }
+
+    this.router.navigate(['/task/list']);
   }
 }

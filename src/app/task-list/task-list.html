@@ -7,6 +7,22 @@
         }
         <h1 class="task-panel-title">{{ viewTitle() }}</h1>
         <p class="task-panel-subtitle">{{ viewSubtitle() }}</p>
+        @if (sprintGoal()) {
+          <p class="task-panel-goal">{{ sprintGoal() }}</p>
+        }
+      </div>
+      <div class="view-tabs" role="tablist">
+        @for (tab of viewTabs; track tab.value) {
+          <button
+            type="button"
+            role="tab"
+            (click)="setView(tab.value)"
+            [attr.aria-selected]="view() === tab.value"
+            [class.active]="view() === tab.value"
+          >
+            {{ tab.label }}
+          </button>
+        }
       </div>
     </header>
 
@@ -27,348 +43,227 @@
     @if (taskService.error()) {
       <p class="mb-4 text-sm text-red-600">{{ taskService.error() }}</p>
     }
-    @if (taskService.loading()) {
+    @if (taskService.loading() && view() !== 'reports') {
       <p class="mb-4 text-sm text-slate-500">Loading tasks...</p>
     }
 
-    <!-- Filter tabs -->
-    <div class="mb-4 flex gap-2 border-b border-slate-200 pb-2">
-      @for (tab of filterTabs; track tab.value) {
-        <button
-          type="button"
-          (click)="setFilter(tab.value)"
-          class="rounded-lg px-4 py-2 text-sm font-medium transition"
-          [class.bg-indigo-100]="filter() === tab.value"
-          [class.text-indigo-700]="filter() === tab.value"
-          [class.text-slate-600]="filter() !== tab.value"
-          [class.hover:bg-slate-100]="filter() !== tab.value"
-        >
-          {{ tab.label }}
-        </button>
-      }
-    </div>
-
-    <!-- Task list -->
-    <ul class="space-y-2">
-      @for (task of filteredTasks(); track task.id) {
-        <li
-          class="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-slate-300"
-        >
+    @if (view() !== 'reports') {
+      <div class="mb-4 flex flex-wrap items-center gap-2">
+        @for (tab of filterTabs; track tab.value) {
           <button
             type="button"
-            (click)="toggle(task)"
-            class="flex size-8 shrink-0 items-center justify-center rounded-full border-2 transition"
-            [class.border-indigo-500]="isCompleted(task)"
-            [class.bg-indigo-500]="isCompleted(task)"
-            [class.border-slate-300]="!isCompleted(task)"
-            [class.hover:border-indigo-400]="!isCompleted(task)"
-            aria-label="Toggle complete"
+            (click)="setFilter(tab.value)"
+            class="rounded-lg px-3 py-1.5 text-sm font-medium transition"
+            [class.bg-indigo-100]="filter() === tab.value"
+            [class.text-indigo-700]="filter() === tab.value"
+            [class.text-slate-600]="filter() !== tab.value"
+            [class.hover:bg-slate-100]="filter() !== tab.value"
           >
-            @if (isCompleted(task)) {
-              <svg class="size-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            }
+            {{ tab.label }}
           </button>
-          <div class="min-w-0 flex-1">
-            <!-- Priority + Title row -->
-            <div class="flex items-center gap-1.5">
-              <!-- Priority dropdown trigger -->
-              <div class="relative inline-flex">
-                <button
-                  type="button"
-                  (click)="startEdit(task, 'priority')"
-                  class="inline-flex items-center rounded p-0.5 transition hover:bg-slate-100"
-                  [title]="task.priority + ' priority'"
-                >
-                  <svg
-                    class="size-4"
-                    [class]="priorityColorClass(task.priority)"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M5 3v18M5 3h10l-2 4 2 4H5"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </button>
-
-                <!-- Priority dropdown -->
-                @if (isEditing(task.id, 'priority')) {
-                  <div class="edit-dropdown">
-                    @for (opt of priorityOptions; track opt.value) {
-                      <button
-                        type="button"
-                        (click)="selectPriority(task.id, opt.value)"
-                        class="dropdown-item"
-                      >
-                        <svg
-                          class="size-4"
-                          [class]="priorityColorClass(opt.value)"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            d="M5 3v18M5 3h10l-2 4 2 4H5"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            fill="currentColor"
-                          />
-                        </svg>
-                        <span>{{ opt.label }}</span>
-                      </button>
-                    }
-                  </div>
-                }
-              </div>
-
-              <!-- Title inline edit -->
-              @if (isEditing(task.id, 'title')) {
-                <input
-                  type="text"
-                  [(ngModel)]="editValue"
-                  (keydown)="onKeydown($event, task.id)"
-                  (blur)="saveEdit(task.id)"
-                  class="inline-block flex-1 rounded border border-indigo-300 px-2 py-0.5 text-sm font-medium text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
-                  autofocus
-                />
-              } @else {
-                <span
-                  (click)="startEdit(task, 'title')"
-                  class="cursor-pointer rounded px-1 transition hover:bg-slate-100"
-                  [class.line-through]="isCompleted(task)"
-                  [class.text-slate-400]="isCompleted(task)"
-                  [class.text-slate-800]="!isCompleted(task)"
-                >
-                  {{ task.title }}
-                </span>
-              }
-            </div>
-
-            <!-- Description inline edit -->
-            @if (isEditing(task.id, 'description')) {
-              <input
-                type="text"
-                [(ngModel)]="editValue"
-                (keydown)="onKeydown($event, task.id)"
-                (blur)="saveEdit(task.id)"
-                class="mt-1 block w-full rounded border border-indigo-300 px-2 py-0.5 text-sm text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Description..."
-                autofocus
-              />
-            } @else if (task.description) {
-              <p
-                (click)="startEdit(task, 'description')"
-                class="mt-0.5 cursor-pointer truncate rounded px-1 text-sm text-slate-500 transition hover:bg-slate-100"
-                [title]="task.description"
-              >
-                {{ task.description }}
-              </p>
-            } @else {
-              <p
-                (click)="startEdit(task, 'description')"
-                class="mt-0.5 cursor-pointer rounded px-1 text-sm italic text-slate-400 transition hover:bg-slate-100"
-              >
-                + Add description
-              </p>
-            }
-
-            <!-- Status & meta row -->
-            <div class="mt-1 flex flex-wrap items-center gap-2">
-              <!-- Status dropdown -->
-              <div class="relative inline-flex">
-                <button
-                  type="button"
-                  (click)="startEdit(task, 'status')"
-                  class="inline-flex rounded-md px-2 py-0.5 text-xs font-medium transition hover:opacity-80"
-                  [class.bg-slate-100]="task.status === 'Open'"
-                  [class.text-slate-700]="task.status === 'Open'"
-                  [class.bg-amber-100]="task.status === 'InProgress'"
-                  [class.text-amber-800]="task.status === 'InProgress'"
-                  [class.bg-emerald-100]="task.status === 'Completed'"
-                  [class.text-emerald-800]="task.status === 'Completed'"
-                  [class.bg-indigo-100]="task.status === 'InReview'"
-                  [class.text-indigo-800]="task.status === 'InReview'"
-                  [class.bg-purple-100]="task.status === 'Accept'"
-                  [class.text-purple-800]="task.status === 'Accept'"
-                  [class.bg-red-100]="task.status === 'Reject'"
-                  [class.text-red-800]="task.status === 'Reject'"
-                  [class.bg-green-100]="task.status === 'Done'"
-                  [class.text-green-800]="task.status === 'Done'"
-                  [class.bg-blue-100]="task.status === 'Pending'"
-                  [class.text-blue-800]="task.status === 'Pending'"
-                  [class.bg-gray-100]="task.status === 'Block'"
-                  [class.text-gray-800]="task.status === 'Block'"
-                >
-                  {{ task.status }}
-                </button>
-
-                @if (isEditing(task.id, 'status')) {
-                  <div class="edit-dropdown">
-                    @for (opt of statusOptions; track opt.value) {
-                      <button
-                        type="button"
-                        (click)="selectStatus(task.id, opt.value)"
-                        class="dropdown-item"
-                      >
-                        <span
-                          class="inline-flex rounded-md px-2 py-0.5 text-xs font-medium"
-                          [class]="statusBgClass(opt.value) + ' ' + statusTextClass(opt.value)"
-                        >
-                          {{ opt.label }}
-                        </span>
-                      </button>
-                    }
-                  </div>
-                }
-              </div>
-
-              <!-- @if (task.category) {
-                <span
-                  class="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
-                >
-                  {{ task.category }}
-                </span>
-              }
-              @if (task.dueDate) {
-                <span class="text-xs text-slate-500"> Due {{ formatDueDate(task.dueDate) }} </span>
-              } -->
-            </div>
-          </div>
-          <div class="relative users-edit-container">
+        }
+        @if (projectTags().length) {
+          <span class="text-xs text-slate-400">Tags</span>
+          @for (tag of projectTags(); track tag.id) {
             <button
               type="button"
-              (click)="startUsersEdit(task)"
-              class="flex -space-x-2 rounded-md p-0.5 transition hover:bg-slate-100"
-              title="Assign users"
+              class="tag-chip"
+              [ngClass]="tagColorClass(tag.tagColor)"
+              [class.ring-2]="isTagFilterOn(tag.id)"
+              (click)="toggleTagFilter(tag.id)"
             >
-              @if (task.users.length > 0) {
-                @for (user of task.users; track user.id) {
-                  <div
-                    class="w-7 h-7 rounded-full text-white flex items-center justify-center text-xs font-semibold border-2 border-white"
-                    [ngClass]="getAvatarColor(user.id)"
-                    title="{{ user?.fullName ?? 'Unknown' }}"
-                  >
-                    {{ getInitial(user?.fullName) }}
-                  </div>
-                }
-              } @else {
-                <div
-                  class="h-7 rounded-full border border-dashed border-slate-300 px-2 text-xs text-slate-500 inline-flex items-center"
-                >
-                  + Users
-                </div>
-              }
+              {{ tag.tagName }}
             </button>
+          }
+        }
+        @if (taskUserService.users().length) {
+          <span class="text-xs text-slate-400">Assignees</span>
+          @for (user of taskUserService.users(); track user.id) {
+            <button
+              type="button"
+              class="inline-flex size-7 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+              [ngClass]="getAvatarColor(user.id)"
+              [class.ring-2]="isUserFilterOn(user.id)"
+              [class.ring-indigo-500]="isUserFilterOn(user.id)"
+              [title]="user.fullName"
+              (click)="toggleUserFilter(user.id)"
+            >
+              {{ getInitial(user.fullName) }}
+            </button>
+          }
+        }
+      </div>
+    }
 
-            @if (isEditing(task.id, 'users')) {
-              <div class="edit-dropdown right-0 mt-2 w-64 max-h-64 overflow-auto">
-                @if (taskUserService.loading()) {
-                  <p class="px-3 py-2 text-sm text-slate-500">Loading users...</p>
-                } @else if (taskUserService.error()) {
-                  <p class="px-3 py-2 text-sm text-red-600">{{ taskUserService.error() }}</p>
-                } @else if (taskUserService.users().length === 0) {
-                  <p class="px-3 py-2 text-sm text-slate-500">No users available.</p>
-                } @else {
-                  @for (user of taskUserService.users(); track user.id) {
-                    <button
-                      type="button"
-                      (click)="toggleUserInEdit(user.id)"
-                      class="dropdown-item w-full"
-                    >
-                      <span class="inline-flex items-center gap-2 min-w-0">
-                        <span class="relative inline-flex">
-                          <span
-                            class="w-6 h-6 rounded-full text-white inline-flex items-center justify-center text-xs font-semibold border-2"
-                            [ngClass]="getAvatarColor(user.id)"
-                            [class.border-red-500]="isUserSelectedInEdit(user.id)"
-                            [class.border-transparent]="!isUserSelectedInEdit(user.id)"
-                          >
-                            {{ getInitial(user.fullName) }}
-                          </span>
-                          @if (isUserSelectedInEdit(user.id)) {
-                            <span
-                              class="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-red-500 text-white text-[9px] leading-none inline-flex items-center justify-center"
-                            >
-                              x
-                            </span>
-                          }
-                        </span>
-                        <span class="truncate">{{ user.fullName }}</span>
-                      </span>
+    @if (view() === 'board') {
+      <app-task-board
+        [columns]="boardColumns()"
+        [loading]="taskService.loading()"
+        [error]="taskService.error()"
+        (statusChange)="onBoardStatusChange($event)"
+        (addTask)="onBoardAddTask($event)"
+        (openTask)="openTask($event)"
+      />
+    } @else if (view() === 'reports') {
+      <app-project-reports
+        [report]="reportService.report()"
+        [tasks]="taskService.tasks()"
+        [sprints]="projectSprints()"
+        [sprintId]="reportSprintId()"
+        [loading]="reportService.loading()"
+        [error]="reportService.error()"
+      />
+    } @else {
+      @if (selectedTaskIds().size > 0) {
+        <div class="bulk-bar">
+          <span>{{ selectedTaskIds().size }} selected</span>
+          <select class="bulk-select" (change)="bulkChangeStatus($any($event.target).value); $any($event.target).value = ''">
+            <option value="">Change status</option>
+            @for (opt of statusOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <div class="task-table">
+        <div class="task-table-head">
+          <span></span>
+          <span>Name</span>
+          <span>Time estimate</span>
+          <span>Assignee</span>
+          <span>Due date</span>
+          <span>Priority</span>
+          <span>Time tracked</span>
+          <span></span>
+        </div>
+
+        @for (group of groupedTasks(); track group.status) {
+          <div class="status-group">
+            <div class="status-group-head" [ngClass]="group.headerClass">
+              <span class="font-semibold uppercase tracking-wide">{{ group.label }}</span>
+              <span>{{ group.tasks.length }}</span>
+            </div>
+            @for (task of group.tasks; track task.id) {
+              <div class="task-row" [class.task-row--selected]="isSelected(task.id)">
+                <label class="select-cell">
+                  <input type="checkbox" [checked]="isSelected(task.id)" (change)="toggleSelected(task.id)" />
+                </label>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="title-btn" (click)="openTask(task)">{{ task.title }}</button>
+                    @for (tag of task.tags; track tag.id) {
+                      <span class="tag-chip" [ngClass]="tagColorClass(tag.tagColor)">{{ tag.tagName }}</span>
+                    }
+                  </div>
+                </div>
+                <div>
+                  @if (isEditing(task.id, 'timeEstimate')) {
+                    <input
+                      class="cell-input"
+                      [(ngModel)]="editValue"
+                      (keydown)="onKeydown($event, task.id)"
+                      (blur)="saveEdit(task.id)"
+                      placeholder="hours"
+                    />
+                  } @else {
+                    <button type="button" class="cell-btn" (click)="startEdit(task, 'timeEstimate')">
+                      {{ formatHours(task.timeEstimate) || '—' }}
                     </button>
                   }
-                }
+                </div>
+                <div class="relative users-edit-container">
+                  <button type="button" class="flex -space-x-1.5" (click)="startUsersEdit(task)">
+                    @if (task.users.length) {
+                      @for (user of task.users; track user.id) {
+                        <span
+                          class="inline-flex size-7 items-center justify-center rounded-full text-[10px] font-semibold text-white ring-2 ring-white"
+                          [ngClass]="getAvatarColor(user.id)"
+                          [title]="user.fullName"
+                        >
+                          {{ getInitial(user.fullName) }}
+                        </span>
+                      }
+                    } @else {
+                      <span class="text-xs text-slate-400">+</span>
+                    }
+                  </button>
+                  @if (isEditing(task.id, 'users')) {
+                    <div class="edit-dropdown right-0 mt-2 w-64 max-h-64 overflow-auto">
+                      @for (user of taskUserService.users(); track user.id) {
+                        <button type="button" class="dropdown-item w-full" (click)="toggleUserInEdit(user.id)">
+                          {{ user.fullName }}
+                          @if (isUserSelectedInEdit(user.id)) {
+                            <span class="ml-auto text-indigo-600">✓</span>
+                          }
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+                <div>
+                  @if (isEditing(task.id, 'dueDate')) {
+                    <input
+                      type="date"
+                      class="cell-input"
+                      [(ngModel)]="editValue"
+                      (keydown)="onKeydown($event, task.id)"
+                      (blur)="saveEdit(task.id)"
+                    />
+                  } @else {
+                    <button type="button" class="cell-btn" (click)="startEdit(task, 'dueDate')">
+                      {{ task.dueDate ? formatDue(task.dueDate) : '—' }}
+                    </button>
+                  }
+                </div>
+                <div class="relative">
+                  <button type="button" (click)="startEdit(task, 'priority')" [title]="task.priority">
+                    <svg class="size-4" [class]="priorityColorClass(task.priority)" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M5 3v18M5 3h10l-2 4 2 4H5" stroke="currentColor" stroke-width="2" fill="currentColor" />
+                    </svg>
+                  </button>
+                  @if (isEditing(task.id, 'priority')) {
+                    <div class="edit-dropdown">
+                      @for (opt of priorityOptions; track opt.value) {
+                        <button type="button" class="dropdown-item" (click)="selectPriority(task.id, opt.value)">
+                          {{ opt.label }}
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+                <div>
+                  @if (isEditing(task.id, 'timeTracked')) {
+                    <input
+                      class="cell-input"
+                      [(ngModel)]="editValue"
+                      (keydown)="onKeydown($event, task.id)"
+                      (blur)="saveEdit(task.id)"
+                      placeholder="+ hours"
+                    />
+                  } @else {
+                    <button type="button" class="cell-btn" (click)="startEdit(task, 'timeTracked')">
+                      {{ formatHours(task.timeTracked) || '+ Add time' }}
+                    </button>
+                  }
+                </div>
+                <div class="flex justify-end gap-1">
+                  <a [routerLink]="['/task/form', task.id]" class="icon-link" aria-label="Edit task">✎</a>
+                  <button type="button" class="icon-link text-red-500" (click)="delete(task)" aria-label="Delete task">
+                    ×
+                  </button>
+                </div>
               </div>
             }
           </div>
-          <a
-            [routerLink]="['/task/form', task.id]"
-            class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-indigo-600"
-            aria-label="Edit task"
-          >
-            <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
-          </a>
-          <button
-            type="button"
-            (click)="delete(task)"
-            class="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-            aria-label="Delete task"
-          >
-            <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              />
-            </svg>
-          </button>
-        </li>
-      } @empty {
-        <li
-          class="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-slate-500"
-        >
-          @if (sprintFilter() === 'backlog') {
-            No backlog tasks yet. Add one above.
-          } @else {
-            No tasks in this sprint yet.
-          }
-        </li>
-      }
-    </ul>
-
-    <!-- Footer: counts + clear completed -->
-    @if (taskService.tasks().length > 0) {
-      <div
-        class="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-4"
-      >
-        <p class="text-sm text-slate-500">
-          {{ taskService.activeCount() }} active, {{ taskService.completedCount() }} completed
-        </p>
-        @if (taskService.completedCount() > 0) {
-          <button
-            type="button"
-            (click)="clearCompleted()"
-            class="text-sm font-medium text-slate-500 transition hover:text-red-600"
-          >
-            Clear completed
-          </button>
+        } @empty {
+          <p class="empty-list">
+            @if (sprintFilter() === 'backlog') {
+              No backlog tasks yet. Add one above.
+            } @else {
+              No tasks in this sprint yet.
+            }
+          </p>
         }
       </div>
     }

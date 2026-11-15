@@ -1,5 +1,9 @@
 # TaskManagerApp
 
+Angular 21 client for the TaskManagement API. Authenticated screens use `AppShell` and `ProjectSidebar`. The API base URL is `environment.api`.
+
+Cursor guidance: `docs/CLIENT_ARCHITECTURE.md`, `docs/FRONTEND_UX.md`, `docs/API_CLIENT.md`, skills in `.cursor/skills/`, and roles in `ai/roles/`.
+
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.1.4.
 
 ## Development server

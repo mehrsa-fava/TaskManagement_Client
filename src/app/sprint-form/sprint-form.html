@@ -61,6 +61,19 @@
         </div>
       </div>
 
+      <div>
+        <label for="sprint-goal" class="mb-1 block text-sm font-medium text-slate-700">
+          Goal
+        </label>
+        <textarea
+          id="sprint-goal"
+          formControlName="goal"
+          rows="3"
+          placeholder="What should this sprint achieve?"
+          class="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        ></textarea>
+      </div>
+
       @if (error) {
         <p class="text-sm text-red-600">{{ error }}</p>
       }
