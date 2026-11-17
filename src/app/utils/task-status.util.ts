@@ -65,6 +65,65 @@ export function statusHeaderClass(status: TaskStatus): string {
   }
 }
 
+export function statusColumnClass(status: TaskStatus): string {
+  switch (status) {
+    case 'Open':
+      return 'bg-slate-100';
+    case 'Pending':
+      return 'bg-amber-100';
+    case 'InProgress':
+      return 'bg-pink-100';
+    case 'Completed':
+      return 'bg-zinc-100';
+    case 'InReview':
+      return 'bg-orange-100';
+    case 'Accept':
+      return 'bg-rose-100';
+    case 'Reject':
+      return 'bg-purple-100';
+    case 'Block':
+      return 'bg-violet-100';
+    case 'Done':
+      return 'bg-emerald-100';
+    default:
+      return 'bg-slate-50';
+  }
+}
+
+export function statusRingClass(status: TaskStatus): string {
+  const filled =
+    status === 'InProgress' ||
+    status === 'Completed' ||
+    status === 'InReview' ||
+    status === 'Accept' ||
+    status === 'Done';
+  const color = (() => {
+    switch (status) {
+      case 'Open':
+        return 'text-slate-400';
+      case 'Pending':
+        return 'text-amber-400';
+      case 'InProgress':
+        return 'text-pink-500';
+      case 'Completed':
+        return 'text-zinc-800';
+      case 'InReview':
+        return 'text-orange-500';
+      case 'Accept':
+        return 'text-rose-600';
+      case 'Reject':
+        return 'text-purple-500';
+      case 'Block':
+        return 'text-violet-500';
+      case 'Done':
+        return 'text-emerald-500';
+      default:
+        return 'text-slate-400';
+    }
+  })();
+  return filled ? `${color} row-dot--filled` : color;
+}
+
 export function statusDotClass(status: TaskStatus): string {
   switch (status) {
     case 'Open':

@@ -26,20 +26,6 @@
       </div>
     </header>
 
-    <div class="task-panel-actions">
-      <a [routerLink]="['/task/form']" [queryParams]="addTaskQueryParams()" class="btn-primary">
-        <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-        Add task
-      </a>
-    </div>
-
     @if (taskService.error()) {
       <p class="mb-4 text-sm text-red-600">{{ taskService.error() }}</p>
     }
@@ -130,46 +116,27 @@
         <div class="task-table-head">
           <span></span>
           <span>Name</span>
-          <span>Time estimate</span>
           <span>Assignee</span>
           <span>Due date</span>
           <span>Priority</span>
-          <span>Time tracked</span>
-          <span></span>
+          <span>Sprint points</span>
         </div>
 
         @for (group of groupedTasks(); track group.status) {
           <div class="status-group">
-            <div class="status-group-head" [ngClass]="group.headerClass">
-              <span class="font-semibold uppercase tracking-wide">{{ group.label }}</span>
-              <span>{{ group.tasks.length }}</span>
+            <div class="status-group-head">
+              <span class="status-pill" [ngClass]="group.headerClass">{{ group.label }} {{ group.tasks.length }}</span>
             </div>
             @for (task of group.tasks; track task.id) {
               <div class="task-row" [class.task-row--selected]="isSelected(task.id)">
                 <label class="select-cell">
                   <input type="checkbox" [checked]="isSelected(task.id)" (change)="toggleSelected(task.id)" />
                 </label>
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="title-btn" (click)="openTask(task)">{{ task.title }}</button>
-                    @for (tag of task.tags; track tag.id) {
-                      <span class="tag-chip" [ngClass]="tagColorClass(tag.tagColor)">{{ tag.tagName }}</span>
-                    }
-                  </div>
-                </div>
-                <div>
-                  @if (isEditing(task.id, 'timeEstimate')) {
-                    <input
-                      class="cell-input"
-                      [(ngModel)]="editValue"
-                      (keydown)="onKeydown($event, task.id)"
-                      (blur)="saveEdit(task.id)"
-                      placeholder="hours"
-                    />
-                  } @else {
-                    <button type="button" class="cell-btn" (click)="startEdit(task, 'timeEstimate')">
-                      {{ formatHours(task.timeEstimate) || '—' }}
-                    </button>
+                <div class="name-cell">
+                  <span class="row-dot" [ngClass]="statusBgClass(task.status)"></span>
+                  <button type="button" class="title-btn" (click)="openTask(task)">{{ task.title }}</button>
+                  @for (tag of task.tags; track tag.id) {
+                    <span class="tag-chip" [ngClass]="tagColorClass(tag.tagColor)">{{ tag.tagName }}</span>
                   }
                 </div>
                 <div class="relative users-edit-container">
@@ -185,7 +152,7 @@
                         </span>
                       }
                     } @else {
-                      <span class="text-xs text-slate-400">+</span>
+                      <span class="empty-icon">👤</span>
                     }
                   </button>
                   @if (isEditing(task.id, 'users')) {
@@ -211,16 +178,23 @@
                       (blur)="saveEdit(task.id)"
                     />
                   } @else {
-                    <button type="button" class="cell-btn" (click)="startEdit(task, 'dueDate')">
-                      {{ task.dueDate ? formatDue(task.dueDate) : '—' }}
+                    <button type="button" class="cell-btn" [class.muted-icon]="!task.dueDate" (click)="startEdit(task, 'dueDate')">
+                      @if (task.dueDate) {
+                        {{ formatDue(task.dueDate) }}
+                      } @else {
+                        <svg class="cell-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="16" rx="2" stroke-width="1.75"/><path stroke-width="1.75" d="M3 10h18M8 3v4M16 3v4"/></svg>
+                      }
                     </button>
                   }
                 </div>
                 <div class="relative">
-                  <button type="button" (click)="startEdit(task, 'priority')" [title]="task.priority">
-                    <svg class="size-4" [class]="priorityColorClass(task.priority)" fill="currentColor" viewBox="0 0 24 24">
+                  <button type="button" class="priority-cell" (click)="startEdit(task, 'priority')" [title]="task.priority">
+                    <svg class="cell-svg" [class]="priorityColorClass(task.priority)" [class.muted-icon]="task.priority === 'Medium' || task.priority === 'Low'" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M5 3v18M5 3h10l-2 4 2 4H5" stroke="currentColor" stroke-width="2" fill="currentColor" />
                     </svg>
+                    @if (task.priority === 'High' || task.priority === 'Urgent') {
+                      <span>{{ task.priority }}</span>
+                    }
                   </button>
                   @if (isEditing(task.id, 'priority')) {
                     <div class="edit-dropdown">
@@ -233,27 +207,107 @@
                   }
                 </div>
                 <div>
-                  @if (isEditing(task.id, 'timeTracked')) {
+                  @if (isEditing(task.id, 'sprintPoints')) {
                     <input
                       class="cell-input"
                       [(ngModel)]="editValue"
                       (keydown)="onKeydown($event, task.id)"
                       (blur)="saveEdit(task.id)"
-                      placeholder="+ hours"
+                      placeholder="pts"
                     />
                   } @else {
-                    <button type="button" class="cell-btn" (click)="startEdit(task, 'timeTracked')">
-                      {{ formatHours(task.timeTracked) || '+ Add time' }}
+                    <button type="button" class="cell-btn muted-icon" (click)="startEdit(task, 'sprintPoints')">
+                      @if (task.sprintPoints != null) {
+                        {{ task.sprintPoints }}
+                      } @else {
+                        <svg class="cell-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8" stroke-width="1.75"/><circle cx="12" cy="12" r="2" stroke-width="1.75"/></svg>
+                      }
                     </button>
                   }
                 </div>
-                <div class="flex justify-end gap-1">
-                  <a [routerLink]="['/task/form', task.id]" class="icon-link" aria-label="Edit task">✎</a>
-                  <button type="button" class="icon-link text-red-500" (click)="delete(task)" aria-label="Delete task">
-                    ×
-                  </button>
+              </div>
+            }
+            @if (inlineAddStatus() === group.status) {
+              <div class="task-row inline-add-row">
+                <span class="row-dot" [ngClass]="statusBgClass(group.status)"></span>
+                <input class="inline-title" [(ngModel)]="inlineTitle" placeholder="Task title" (keydown.enter)="saveInlineAdd()" />
+                <div class="inline-toolbar">
+                  <div class="inline-menu-host relative">
+                    <button type="button" class="inline-icon-btn" (click)="inlineMenu = inlineMenu === 'users' ? null : 'users'">
+                      @if (inlineAssignees().length) {
+                        @for (user of inlineAssignees(); track user.id) {
+                          <span class="inline-flex size-6 items-center justify-center rounded-full text-[10px] font-semibold text-white" [ngClass]="getAvatarColor(user.id)">{{ getInitial(user.fullName) }}</span>
+                          <span class="inline-chip-text">{{ user.fullName }}</span>
+                        }
+                      } @else {
+                        <svg class="cell-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.75" d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4" stroke-width="1.75"/></svg>
+                      }
+                    </button>
+                    @if (inlineMenu === 'users') {
+                      <div class="edit-dropdown right-0">
+                        @for (user of taskUserService.users(); track user.id) {
+                          <button type="button" class="dropdown-item" (click)="toggleInlineUser(user.id)">
+                            {{ user.fullName }}
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <div class="inline-menu-host relative">
+                    <button type="button" class="inline-icon-btn" (click)="inlineMenu = inlineMenu === 'due' ? null : 'due'">
+                      <svg class="cell-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="16" rx="2" stroke-width="1.75"/><path stroke-width="1.75" d="M3 10h18M8 3v4M16 3v4"/></svg>
+                      @if (inlineDueDate) {
+                        <span class="inline-chip-text">{{ formatDue(inlineDueDate) }}</span>
+                      }
+                    </button>
+                    @if (inlineMenu === 'due') {
+                      <div class="edit-dropdown">
+                        <input type="date" class="cell-input" [(ngModel)]="inlineDueDate" />
+                      </div>
+                    }
+                  </div>
+                  <div class="inline-menu-host relative">
+                    <button type="button" class="inline-icon-btn" (click)="inlineMenu = inlineMenu === 'priority' ? null : 'priority'">
+                      <svg class="cell-svg" [class]="priorityColorClass(inlinePriority)" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M5 3v18M5 3h10l-2 4 2 4H5" stroke="currentColor" stroke-width="2" fill="currentColor" />
+                      </svg>
+                      @if (inlinePriority === 'High' || inlinePriority === 'Urgent') {
+                        <span class="inline-chip-text">{{ inlinePriority }}</span>
+                      }
+                    </button>
+                    @if (inlineMenu === 'priority') {
+                      <div class="edit-dropdown">
+                        @for (opt of priorityOptions; track opt.value) {
+                          <button type="button" class="dropdown-item" (click)="inlinePriority = opt.value; inlineMenu = null">
+                            {{ opt.label }}
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <div class="inline-menu-host relative">
+                    <button type="button" class="inline-icon-btn" (click)="inlineMenu = inlineMenu === 'tags' ? null : 'tags'">
+                      <svg class="cell-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.75" d="M20.6 13.4L12 22l-8.6-8.6a5 5 0 017-7L12 8l1.6-1.6a5 5 0 017 7z"/></svg>
+                      @if (inlineTagCount()) {
+                        <span class="inline-chip-text">{{ inlineTagCount() }} tags</span>
+                      }
+                    </button>
+                    @if (inlineMenu === 'tags') {
+                      <div class="edit-dropdown right-0">
+                        @for (tag of projectTags(); track tag.id) {
+                          <button type="button" class="dropdown-item" (click)="toggleInlineTag(tag.id)">
+                            <span class="tag-chip" [ngClass]="tagColorClass(tag.tagColor)">{{ tag.tagName }}</span>
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <button type="button" class="cancel-btn" (click)="cancelInlineAdd()">Cancel</button>
+                  <button type="button" class="save-btn" (click)="saveInlineAdd()">Save</button>
                 </div>
               </div>
+            } @else {
+              <button type="button" class="add-in-group" (click)="startInlineAdd(group.status)">+ Add Task</button>
             }
           </div>
         } @empty {

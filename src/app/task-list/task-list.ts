@@ -1,6 +1,6 @@
 import { Component, computed, signal, OnInit, HostListener } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '../services/task-service';
 import { TaskUserService } from '../services/task-user-service';
@@ -18,6 +18,7 @@ import {
   BOARD_STATUS_ORDER,
   priorityColorClass,
   statusHeaderClass,
+  statusRingClass,
   statusLabel,
   tagColorClass,
 } from '../utils/task-status.util';
@@ -48,11 +49,12 @@ export type EditingField =
   | 'timeEstimate'
   | 'timeTracked'
   | 'dueDate'
+  | 'sprintPoints'
   | null;
 
 @Component({
   selector: 'app-task-list',
-  imports: [RouterLink, FormsModule, NgClass, TaskBoard, ProjectReports],
+  imports: [FormsModule, NgClass, TaskBoard, ProjectReports],
   templateUrl: './task-list.html',
   styleUrl: './task-list.css',
 })
@@ -63,6 +65,14 @@ export class TaskList implements OnInit {
   private readonly selectedUserIdsFilter = signal<string[]>([]);
   readonly selectedTaskIds = signal<Set<string>>(new Set());
   readonly boardColumns = signal<BoardColumn[]>([]);
+  readonly inlineAddStatus = signal<TaskStatus | null>(null);
+  inlineTitle = '';
+  inlinePriority: TaskPriority = 'Medium';
+  inlineDueDate = '';
+  inlinePoints: number | null = null;
+  readonly inlineUserIds = signal<Set<string>>(new Set());
+  readonly inlineTagIds = signal<number[]>([]);
+  inlineMenu: 'users' | 'tags' | 'priority' | 'due' | null = null;
 
   readonly projectId = signal<number | null>(null);
   /** 'backlog' = sprintId is null; number = specific sprint */
@@ -108,12 +118,13 @@ export class TaskList implements OnInit {
 
   readonly groupedTasks = computed(() => {
     const tasks = this.filteredTasks();
+    const adding = this.inlineAddStatus();
     return BOARD_STATUS_ORDER.map((status) => ({
       status,
       label: statusLabel(status),
       headerClass: statusHeaderClass(status),
       tasks: tasks.filter((task) => task.status === status),
-    })).filter((group) => group.tasks.length > 0 || this.filterSignal() === 'all');
+    })).filter((group) => group.tasks.length > 0 || adding === group.status || (tasks.length === 0 && group.status === 'Open'));
   });
 
   readonly viewTitle = computed(() => {
@@ -373,6 +384,8 @@ export class TaskList implements OnInit {
       this.editValue.set('');
     } else if (field === 'dueDate') {
       this.editValue.set(task.dueDate ?? '');
+    } else if (field === 'sprintPoints') {
+      this.editValue.set(task.sprintPoints != null ? String(task.sprintPoints) : '');
     }
   }
 
@@ -423,6 +436,11 @@ export class TaskList implements OnInit {
     } else if (field === 'dueDate') {
       this.taskService
         .updateTask(taskId, { dueDate: value || null })
+        .subscribe(() => this.cancelEdit());
+    } else if (field === 'sprintPoints') {
+      const points = parseHoursInput(value);
+      this.taskService
+        .updateTask(taskId, { sprintPoints: points })
         .subscribe(() => this.cancelEdit());
     }
   }
@@ -482,11 +500,69 @@ export class TaskList implements OnInit {
     });
   }
 
+  startInlineAdd(status: TaskStatus): void {
+    this.inlineAddStatus.set(status);
+    this.inlineTitle = '';
+    this.inlinePriority = 'Medium';
+    this.inlineDueDate = '';
+    this.inlinePoints = null;
+    this.inlineUserIds.set(new Set());
+    this.inlineTagIds.set([]);
+    this.inlineMenu = null;
+  }
+
+  cancelInlineAdd(): void {
+    this.inlineAddStatus.set(null);
+    this.inlineMenu = null;
+  }
+
+  toggleInlineUser(userId: string): void {
+    this.inlineUserIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  }
+
+  toggleInlineTag(tagId: number): void {
+    this.inlineTagIds.update((ids) =>
+      ids.includes(tagId) ? ids.filter((id) => id !== tagId) : [...ids, tagId],
+    );
+  }
+
+  saveInlineAdd(): void {
+    const title = this.inlineTitle.trim();
+    const pid = this.projectId();
+    const status = this.inlineAddStatus();
+    if (!title || pid == null || !status) return;
+    const sprintFilter = this.sprintFilter();
+    this.taskService
+      .addTask({
+        title,
+        status,
+        projectId: pid,
+        sprintId: sprintFilter === 'backlog' ? null : sprintFilter,
+        priority: this.inlinePriority,
+        dueDate: this.inlineDueDate || null,
+        sprintPoints: this.inlinePoints,
+        userIds: [...this.inlineUserIds()],
+        tagIds: this.inlineTagIds(),
+      })
+      .subscribe((task) => {
+        if (!task) return;
+        this.cancelInlineAdd();
+        this.reloadWorkspace();
+      });
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (this.editingField() !== 'users') return;
-
     const target = event.target as HTMLElement | null;
+    if (this.inlineMenu && !target?.closest('.inline-menu-host')) {
+      this.inlineMenu = null;
+    }
+    if (this.editingField() !== 'users') return;
     if (target?.closest('.users-edit-container')) return;
 
     const taskId = this.editingTaskId();
@@ -509,7 +585,16 @@ export class TaskList implements OnInit {
   }
 
   statusBgClass(status: TaskStatus): string {
-    return statusHeaderClass(status);
+    return statusRingClass(status);
+  }
+
+  inlineAssignees() {
+    const ids = this.inlineUserIds();
+    return this.taskUserService.users().filter((user) => ids.has(user.id));
+  }
+
+  inlineTagCount(): number {
+    return this.inlineTagIds().length;
   }
 
   statusTextClass(_status: TaskStatus): string {

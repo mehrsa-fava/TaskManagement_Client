@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, HostListener } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
@@ -24,7 +24,14 @@ import { getAvatarColor, getInitial } from '../utils/avatar.util';
 import { parseRelatedTaskIds, serializeRelatedTaskIds } from '../utils/related-tasks.util';
 import { formatActivityTime, parseActivityLines } from '../utils/activity-log.util';
 import { formatHours } from '../utils/hours.util';
-import { statusDotClass, statusLabel, tagColorClass } from '../utils/task-status.util';
+import {
+  statusDotClass,
+  statusHeaderClass,
+  statusLabel,
+  tagColorClass,
+  priorityColorClass,
+} from '../utils/task-status.util';
+import type { TaskTag } from '../model/tag';
 
 @Component({
   selector: 'app-task-form',
@@ -49,9 +56,12 @@ export class TaskForm implements OnInit {
   relatedQuery = signal('');
   tagDraft = '';
   tagColor: TagColor = 'Pink';
+  showTagSettings = false;
   commentDraft = '';
   addTimeDraft = '';
-  showRelated = false;
+  subtaskTitle = '';
+  trackingOpen = false;
+  readonly openPanel = signal<'assignees' | 'tags' | 'related' | 'subtask' | 'priority' | null>(null);
 
   readonly isEditMode = signal(false);
   private taskId: string | null = null;
@@ -63,8 +73,10 @@ export class TaskForm implements OnInit {
   readonly typeOptions = TASK_TYPE_OPTIONS;
   readonly tagColorOptions = TAG_COLOR_OPTIONS;
   readonly statusLabel = statusLabel;
+  readonly statusHeaderClass = statusHeaderClass;
   readonly statusDotClass = statusDotClass;
   readonly tagColorClass = tagColorClass;
+  readonly priorityColorClass = priorityColorClass;
   readonly formatHours = formatHours;
   readonly formatActivityTime = formatActivityTime;
 
@@ -108,6 +120,69 @@ export class TaskForm implements OnInit {
     if (raw === null || raw === '' || raw === 'null') return null;
     const n = parseInt(raw, 10);
     return Number.isNaN(n) ? null : n;
+  }
+
+  currentStatus(): TaskStatus {
+    return (this.taskForm?.get('status')?.value as TaskStatus) ?? 'Open';
+  }
+
+  currentPriority(): TaskPriority {
+    return (this.taskForm?.get('priority')?.value as TaskPriority) ?? 'Medium';
+  }
+
+  setPriority(priority: TaskPriority): void {
+    this.taskForm.patchValue({ priority });
+    this.openPanel.set(null);
+  }
+
+  markComplete(): void {
+    const next = this.currentStatus() === 'Completed' || this.currentStatus() === 'Done' ? 'Open' : 'Completed';
+    this.taskForm.patchValue({ status: next });
+  }
+
+  togglePanel(panel: 'assignees' | 'tags' | 'related' | 'subtask' | 'priority'): void {
+    this.showTagSettings = false;
+    this.openPanel.update((current) => (current === panel ? null : panel));
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (!target?.closest('.popover-host, .action-list')) this.openPanel.set(null);
+  }
+
+  selectedAssignees() {
+    return this.users().filter((user) => this.selectedUserIds().has(user.id));
+  }
+
+  selectedTags(): TaskTag[] {
+    const selected = new Set(this.selectedTagIds());
+    return this.projectTags().filter((tag) => selected.has(tag.id));
+  }
+
+  filteredProjectTags(): TaskTag[] {
+    const term = this.tagDraft.trim().toLowerCase().replace(/\s+/g, '');
+    if (!term) return this.projectTags();
+    return this.projectTags().filter((tag) => tag.tagName.toLowerCase().includes(term));
+  }
+
+  addSubtask(): void {
+    const title = this.subtaskTitle.trim();
+    const projectId = Number(this.taskForm.getRawValue().projectId);
+    if (!title || Number.isNaN(projectId)) return;
+    this.taskService
+      .addTask({
+        title,
+        projectId,
+        sprintId: this.sprintId,
+        status: 'Open',
+      })
+      .subscribe((task) => {
+        if (!task) return;
+        this.subtaskTitle = '';
+        this.relatedIds.update((ids) => [...ids, task.id]);
+        this.openPanel.set(null);
+      });
   }
 
   toggleUser(userId: string): void {
@@ -226,6 +301,10 @@ export class TaskForm implements OnInit {
       this.tagDraft = '';
       this.selectedTagIds.update((ids) => (ids.includes(tag.id) ? ids : [...ids, tag.id]));
     });
+  }
+
+  startTracking(): void {
+    this.trackingOpen = !this.trackingOpen;
   }
 
   addTrackedTime(): void {

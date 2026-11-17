@@ -1,20 +1,14 @@
 <div class="task-detail" [class.task-detail--create]="!isEditMode()">
   <div class="task-detail-main">
     <a [routerLink]="taskListBackLink()" class="back-link">← Back</a>
-    <form [formGroup]="taskForm" (ngSubmit)="submit()" class="space-y-5">
-      <!-- @if (!isEditMode()) {
-        <div>
-          <label class="field-label" for="task-project">Project</label>
-          <select id="task-project" formControlName="projectId" class="field">
-            <option [ngValue]="null">Select a project</option>
-            @for (p of projectService.projects(); track p.id) {
-              <option [ngValue]="p.id">{{ p.title }}</option>
-            }
-          </select>
-        </div>
-      } @else {
-        <p class="text-sm text-slate-500">Project: <strong class="text-slate-800">{{ projectLabel() }}</strong></p>
-      } -->
+    <form [formGroup]="taskForm" (ngSubmit)="submit()">
+      <div class="type-row">
+        <select formControlName="taskType" class="type-select">
+          @for (opt of typeOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
 
       <input
         id="task-title"
@@ -25,158 +19,257 @@
         autofocus
       />
 
-      <div class="meta-grid">
-        <label class="meta-row">
-          <span>Status</span>
-          <select formControlName="status" class="field">
-            @for (opt of statusOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.label }}</option>
-            }
-          </select>
-        </label>
-        <label class="meta-row">
-          <span>Priority</span>
-          <select formControlName="priority" class="field">
-            @for (opt of priorityOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.label }}</option>
-            }
-          </select>
-        </label>
-        <label class="meta-row">
-          <span>Type</span>
-          <select formControlName="taskType" class="field">
-            @for (opt of typeOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.label }}</option>
-            }
-          </select>
-        </label>
-        <label class="meta-row">
-          <span>Due date</span>
-          <app-persian-date-input formControlName="dueDate" inputId="task-due" />
-        </label>
-        <label class="meta-row">
-          <span>Time estimate</span>
-          <input type="number" min="0" formControlName="timeEstimate" class="field" placeholder="hours" />
-        </label>
-        <label class="meta-row">
-          <span>Sprint points</span>
-          <input type="number" min="0" formControlName="sprintPoints" class="field" />
-        </label>
-      </div>
-
-      <div>
-        <p class="field-label">Assignees</p>
-        <div class="flex flex-wrap gap-2 mb-2">
-          @for (user of users(); track user.id) {
-            @if (isUserSelected(user.id)) {
-              <button type="button" class="chip" (click)="toggleUser(user.id)">
-                <span class="avatar" [ngClass]="getAvatarColor(user.id)">{{ getInitial(user.fullName) }}</span>
-                {{ user.fullName }}
-              </button>
-            }
-          }
-        </div>
-        <input class="field mb-2" placeholder="Search users..." [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)" />
-        <div class="user-list">
-          @for (user of filteredUsers(); track user.id) {
-            <button type="button" class="user-row" [class.selected]="isUserSelected(user.id)" (click)="toggleUser(user.id)">
-              <span class="avatar" [ngClass]="getAvatarColor(user.id)">{{ getInitial(user.fullName) }}</span>
-              {{ user.fullName }}
-            </button>
-          }
-        </div>
-      </div>
-
-      <div>
-        <p class="field-label">Tags</p>
-        <div class="flex flex-wrap gap-2 mb-2">
-          @for (tag of projectTags(); track tag.id) {
-            <button
-              type="button"
-              class="tag-chip"
-              [ngClass]="tagColorClass(tag.tagColor)"
-              [class.ring-2]="selectedTagIds().includes(tag.id)"
-              (click)="toggleTag(tag.id)"
-            >
-              {{ tag.tagName }}
-            </button>
-          }
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <input class="field flex-1" [(ngModel)]="tagDraft" [ngModelOptions]="{ standalone: true }" placeholder="New tag" />
-          <select class="field w-32" [(ngModel)]="tagColor" [ngModelOptions]="{ standalone: true }">
-            @for (color of tagColorOptions; track color.value) {
-              <option [ngValue]="color.value">{{ color.label }}</option>
-            }
-          </select>
-          <button type="button" class="btn-secondary" (click)="createTag()">Add tag</button>
-        </div>
-      </div>
-
-      <div>
-        <label class="field-label" for="task-description">Description</label>
-        <textarea id="task-description" formControlName="description" rows="4" class="field" placeholder="Add description, or write notes"></textarea>
-      </div>
-
-      @if (isEditMode()) {
-        <div>
-          <p class="field-label">Track time</p>
-          <p class="text-sm text-slate-500 mb-2">
-            Tracked {{ formatHours(currentTask()?.timeTracked) || '0h' }}
-          </p>
-          <div class="flex gap-2">
-            <input class="field w-32" [(ngModel)]="addTimeDraft" [ngModelOptions]="{ standalone: true }" placeholder="+ hours" />
-            <button type="button" class="btn-secondary" (click)="addTrackedTime()">Add time</button>
+      <div class="prop-list">
+        <div class="prop-row">
+          <span class="prop-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="1.75"/><path stroke-width="1.75" d="M12 7v5l3 2"/></svg>
+            Status
+          </span>
+          <div class="status-value">
+            <select formControlName="status" class="status-select" [ngClass]="statusHeaderClass(currentStatus())">
+              @for (opt of statusOptions; track opt.value) {
+                <option [value]="opt.value">{{ opt.label }}</option>
+              }
+            </select>
+            <button type="button" class="status-check" (click)="markComplete()" title="Mark complete">✓</button>
           </div>
         </div>
-      }
 
-      <div>
-        <button type="button" class="link-action" (click)="showRelated = !showRelated">Relate items or add dependencies</button>
-        <div class="related-box">
-          @for (task of relatedTasks(); track task.id) {
-            <div class="related-item">
-              <span class="status-dot" [ngClass]="statusDotClass(task.status)"></span>
-              <span>{{ task.title }}</span>
-              <button type="button" (click)="toggleRelated(task.id)">×</button>
-            </div>
-          }
-          @if (showRelated) {
-            <input class="field mt-2" placeholder="Search..." [value]="relatedQuery()" (input)="relatedQuery.set($any($event.target).value)" />
-            <div class="related-list">
-              @for (task of relatedCandidates(); track task.id) {
-                <button type="button" class="related-item" (click)="toggleRelated(task.id)">
-                  <span class="status-dot" [ngClass]="statusDotClass(task.status)"></span>
-                  {{ task.title }}
-                </button>
-              } @empty {
-                <p class="text-sm text-slate-400 p-2">No matching tasks.</p>
+        <div class="prop-row">
+          <span class="prop-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.75" d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4" stroke-width="1.75"/></svg>
+            Assignees
+          </span>
+          <div class="prop-value popover-host">
+            <button type="button" class="ghost-value" (click)="$event.stopPropagation(); togglePanel('assignees')">
+              @if (selectedAssignees().length) {
+                @for (user of selectedAssignees(); track user.id) {
+                  <span class="chip">
+                    <span class="avatar" [ngClass]="getAvatarColor(user.id)">{{ getInitial(user.fullName) }}</span>
+                    {{ user.fullName }}
+                  </span>
+                }
+              } @else {
+                Empty
               }
-            </div>
-          }
+            </button>
+            @if (openPanel() === 'assignees') {
+              <div class="popover">
+                <input class="field" placeholder="Search users..." [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)" />
+                @for (user of filteredUsers(); track user.id) {
+                  <button type="button" class="user-row" [class.selected]="isUserSelected(user.id)" (click)="toggleUser(user.id)">
+                    <span class="avatar" [ngClass]="getAvatarColor(user.id)">{{ getInitial(user.fullName) }}</span>
+                    {{ user.fullName }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <span class="prop-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="16" rx="2" stroke-width="1.75"/><path stroke-width="1.75" d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Dates
+          </span>
+          <div class="date-pair">
+            <span class="date-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="16" rx="2" stroke-width="1.75"/><path stroke-width="1.75" d="M3 10h18M8 3v4M16 3v4"/></svg>
+              Start
+            </span>
+            <span class="arrow">→</span>
+            <app-persian-date-input formControlName="dueDate" inputId="task-due" placeholder="Due" />
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <span class="prop-label">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 3v18M5 3h10l-2 4 2 4H5"/></svg>
+            Priority
+          </span>
+          <div class="prop-value popover-host">
+            <button type="button" class="ghost-value priority-value" (click)="$event.stopPropagation(); togglePanel('priority')">
+              <svg class="flag-icon" [class]="priorityColorClass(currentPriority())" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M5 3v18M5 3h10l-2 4 2 4H5" stroke="currentColor" stroke-width="2" fill="currentColor" />
+              </svg>
+              {{ currentPriority() }}
+            </button>
+            @if (openPanel() === 'priority') {
+              <div class="popover">
+                @for (opt of priorityOptions; track opt.value) {
+                  <button type="button" class="user-row" (click)="setPriority(opt.value)">
+                    <svg class="flag-icon" [class]="priorityColorClass(opt.value)" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M5 3v18M5 3h10l-2 4 2 4H5" stroke="currentColor" stroke-width="2" fill="currentColor" />
+                    </svg>
+                    {{ opt.label }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <span class="prop-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="1.75"/><path stroke-width="1.75" d="M12 8v4l3 2"/></svg>
+            Time estimate
+          </span>
+          <input type="number" min="0" formControlName="timeEstimate" class="ghost-input" placeholder="Empty" />
+        </div>
+
+        <div class="prop-row">
+          <span class="prop-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8" stroke-width="1.75"/><circle cx="12" cy="12" r="2" stroke-width="1.75"/></svg>
+            Sprint points
+          </span>
+          <input type="number" min="0" formControlName="sprintPoints" class="ghost-input" placeholder="Empty" />
+        </div>
+
+        <div class="prop-row">
+          <span class="prop-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="1.75"/><path stroke-width="1.75" d="M10 12l2 2 4-4"/></svg>
+            Track time
+          </span>
+          <div class="track-row">
+            <button type="button" class="start-btn" (click)="startTracking()">
+              <span class="play-dot"></span>
+              Start
+            </button>
+            @if (currentTask()?.timeTracked) {
+              <span class="muted">{{ formatHours(currentTask()?.timeTracked) }}</span>
+            }
+            @if (trackingOpen) {
+              <input class="ghost-input w-24" [(ngModel)]="addTimeDraft" [ngModelOptions]="{ standalone: true }" placeholder="+ hours" />
+              <button type="button" class="start-btn" (click)="addTrackedTime()">Add</button>
+            }
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <span class="prop-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.75" d="M20.6 13.4L12 22l-8.6-8.6a5 5 0 017-7L12 8l1.6-1.6a5 5 0 017 7z"/></svg>
+            Tags
+          </span>
+          <div class="prop-value popover-host">
+            <button type="button" class="ghost-value" (click)="$event.stopPropagation(); togglePanel('tags')">
+              @if (selectedTags().length) {
+                @for (tag of selectedTags(); track tag.id) {
+                  <span class="tag-chip" [ngClass]="tagColorClass(tag.tagColor)">{{ tag.tagName }}</span>
+                }
+              } @else {
+                Empty
+              }
+            </button>
+            @if (openPanel() === 'tags') {
+              <div class="popover tag-popover" (click)="$event.stopPropagation()">
+                <input
+                  class="tag-search"
+                  placeholder="Search or add tags..."
+                  [value]="tagDraft"
+                  (input)="tagDraft = $any($event.target).value"
+                  (keydown.enter)="$event.preventDefault(); createTag()"
+                />
+                <div class="tag-popover-head">
+                  <p class="popover-caption">Select an option</p>
+                  <button type="button" class="gear-btn" (click)="showTagSettings = !showTagSettings" title="Tag settings">⚙</button>
+                </div>
+                @if (showTagSettings) {
+                  <div class="color-row">
+                    @for (color of tagColorOptions; track color.value) {
+                      <button
+                        type="button"
+                        class="color-dot"
+                        [ngClass]="tagColorClass(color.value)"
+                        [class.ring-2]="tagColor === color.value"
+                        (click)="tagColor = color.value"
+                      ></button>
+                    }
+                  </div>
+                }
+                <div class="tag-options">
+                  @for (tag of filteredProjectTags(); track tag.id) {
+                    <button
+                      type="button"
+                      class="tag-chip"
+                      [ngClass]="tagColorClass(tag.tagColor)"
+                      [class.ring-2]="selectedTagIds().includes(tag.id)"
+                      (click)="toggleTag(tag.id)"
+                    >
+                      {{ tag.tagName }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
         </div>
       </div>
 
-      @if (isEditMode()) {
-        <div>
-          <p class="field-label">Attachments</p>
-          <input type="file" (change)="onFileSelected($event)" />
-          <ul class="mt-2 space-y-1">
+      <textarea formControlName="description" rows="4" class="description" placeholder="description"></textarea>
+
+      <div class="action-list">
+        <button type="button" class="action-row" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="4" width="16" height="16" rx="2" stroke-width="1.75"/><path stroke-width="1.75" d="M8 12h8M12 8v8"/></svg>
+          Add fields
+        </button>
+        <button type="button" class="action-row" (click)="togglePanel('subtask')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.75" d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>
+          Add subtask
+        </button>
+        @if (openPanel() === 'subtask') {
+          <div class="inline-create">
+            <input class="field" [(ngModel)]="subtaskTitle" [ngModelOptions]="{ standalone: true }" placeholder="Subtask title" />
+            <button type="button" class="btn-primary" (click)="addSubtask()">Add</button>
+          </div>
+        }
+        <button type="button" class="action-row" (click)="togglePanel('related')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.75" d="M10 13a5 5 0 007.07 0l2-2a5 5 0 00-7.07-7.07l-1.2 1.2M14 11a5 5 0 00-7.07 0l-2 2a5 5 0 007.07 7.07l1.2-1.2"/></svg>
+          Relate items or add dependencies
+        </button>
+        @if (openPanel() === 'related') {
+          <div class="related-box">
+            @for (task of relatedTasks(); track task.id) {
+              <div class="related-item">
+                <span class="status-dot" [ngClass]="statusDotClass(task.status)"></span>
+                <span>{{ task.title }}</span>
+                <button type="button" (click)="toggleRelated(task.id)">×</button>
+              </div>
+            }
+            <input class="field" placeholder="Search..." [value]="relatedQuery()" (input)="relatedQuery.set($any($event.target).value)" />
+            @for (task of relatedCandidates(); track task.id) {
+              <button type="button" class="related-item" (click)="toggleRelated(task.id)">
+                <span class="status-dot" [ngClass]="statusDotClass(task.status)"></span>
+                {{ task.title }}
+              </button>
+            }
+          </div>
+        }
+        <button type="button" class="action-row" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.75" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          Create checklist
+        </button>
+        <button type="button" class="action-row" (click)="fileInput.click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.75" d="M21.4 12.6L12 22l-8.6-8.6a5 5 0 017-7L12 8l1.6-1.6a5 5 0 017 7z"/></svg>
+          Attach file
+        </button>
+        <input #fileInput type="file" class="hidden-file" (change)="onFileSelected($event)" />
+        @if (currentTask()?.attachments?.length) {
+          <ul class="file-list">
             @for (file of currentTask()?.attachments ?? []; track file.id) {
-              <li class="flex items-center justify-between text-sm">
-                <button type="button" class="text-indigo-600" (click)="downloadFile(file.id, file.name)">{{ file.name }}</button>
+              <li>
+                <button type="button" (click)="downloadFile(file.id, file.name)">{{ file.name }}</button>
                 <button type="button" class="text-red-500" (click)="deleteFile(file.id)">Delete</button>
               </li>
             }
           </ul>
-        </div>
-      }
+        }
+      </div>
 
       @if (error) {
-        <p class="text-sm text-red-600">{{ error }}</p>
+        <p class="text-sm text-red-600 mt-3">{{ error }}</p>
       }
-      <div class="flex gap-3">
-        <button type="submit" class="btn-primary">{{ isEditMode() ? 'Save changes' : 'Add task' }}</button>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">{{ isEditMode() ? 'Save' : 'Save' }}</button>
         <a [routerLink]="taskListBackLink()" class="btn-secondary">Cancel</a>
       </div>
     </form>

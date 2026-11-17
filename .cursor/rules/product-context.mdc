@@ -1,0 +1,25 @@
+
+---
+description: Shared product requirements for the Task Management Platform
+alwaysApply: true
+---
+
+# Product Context
+
+Before implementing any feature, consult:
+
+`docs/PRODUCT_REQUIREMENTS.md`
+
+This document is the shared source of truth for product behavior.
+
+## Instructions
+
+1. Do not implement features that contradict product requirements.
+2. Preserve existing architecture and working functionality.
+3. Identify frontend/backend contract dependencies.
+4. Do not invent missing business rules.
+5. Ask for clarification when a requirement is ambiguous.
+6. Keep documentation updated when implementation changes product behavior.
+7. Respect the supplied UI screenshots and design references.
+8. Enforce authorization and validation on the backend.
+9. Keep frontend and backend API contracts consistent.

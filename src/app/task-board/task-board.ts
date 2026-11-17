@@ -7,6 +7,7 @@ import {
   BOARD_STATUS_ORDER,
   priorityColorClass,
   statusDotClass,
+  statusColumnClass,
   statusHeaderClass,
   statusLabel,
   tagColorClass,
@@ -35,6 +36,7 @@ export class TaskBoard {
 
   statusLabel = statusLabel;
   statusHeaderClass = statusHeaderClass;
+  statusColumnClass = statusColumnClass;
   statusDotClass = statusDotClass;
   priorityColorClass = priorityColorClass;
   tagColorClass = tagColorClass;
